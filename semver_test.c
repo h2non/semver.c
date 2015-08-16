@@ -71,7 +71,7 @@ test_parse_minor() {
   test_end();
 }
 
-static struct test_case {
+struct test_case {
   char * x;
   char * y;
   int  expected;

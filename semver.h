@@ -63,3 +63,9 @@ semver_ne (semver_t x, semver_t y);
 
 int
 semver_parse (const char *str, semver_t *ver);
+
+int
+semver_valid_chars (const char *s, const char *c);
+
+int
+semver_parse_int (const char *s);

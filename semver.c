@@ -16,12 +16,6 @@
 #define DELIMITER "."
 #define SLICE_SIZE 50
 
-semver_t *
-semver_new (int major, int minor, int patch) {
-  semver_t * ver = { major, minor, patch };
-  return ver;
-}
-
 int
 semver_parse (const char *str, semver_t *ver) {
   char major_s[SLICE_SIZE] = "0";
@@ -29,7 +23,7 @@ semver_parse (const char *str, semver_t *ver) {
   char patch_s[SLICE_SIZE] = "0";
   char tail_s[SLICE_SIZE]  = "0";
 
-  char * slice = strtok(str, DELIMITER);
+  char * slice = strtok((char*)str, DELIMITER);
 
   int count = 0;
   while (slice != NULL) {
