@@ -1,6 +1,6 @@
-# server.c
+# server.c [![Build Status](https://travis-ci.org/h2non/semver.c.png)](https://travis-ci.org/h2non/semver.c)
 
-[semver](http://semver.org) v2.0 compliant parser and matcher implemented in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
+[semver](http://semver.org) v2.0 compliant parser written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
 
 **This is much a work in progress**
 
