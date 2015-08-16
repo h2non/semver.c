@@ -62,20 +62,20 @@ $ clib install h2non/semver.c
 
 ## API
 
-#### semver_t { int major, int minor, int patch, semver_pr_t pr }
+#### struct semver_t { int major, int minor, int patch, semver_pr_t pr }
 
 semver base struct.
 
-#### semver_pr { int number, const char stage }
+#### struct semver_pr { int number, const char stage }
 
 semver prerelease struct.
 
-##### int semver_parse(const char *str, semver_t *ver)
+#### int semver_parse(const char *str, semver_t *ver)
 
 Parses a string as semver expression.
 Returns `-1` in case parsing error due to invalid expression.
 
-##### int semver_compare(semver_t a, semver_t b)
+#### int semver_compare(semver_t a, semver_t b)
 
 Compare versions `a` with `b`.
 
@@ -84,27 +84,27 @@ Returns:
 - `0` in case of equal versions.
 - `1` in case of higher version.
 
-##### int semver_eq(semver_t a, semver_t b)
+#### int semver_eq(semver_t a, semver_t b)
 
 Equality comparison.
 
-##### int semver_ne(semver_t a, semver_t b)
+#### int semver_ne(semver_t a, semver_t b)
 
 Non equal comparison.
 
-##### int semver_gt(semver_t a, semver_t b)
+#### int semver_gt(semver_t a, semver_t b)
 
 Greater than comparison.
 
-##### int semver_lt(semver_t a, semver_t b)
+#### int semver_lt(semver_t a, semver_t b)
 
 Lower than comparison.
 
-##### int semver_gte(semver_t a, semver_t b)
+#### int semver_gte(semver_t a, semver_t b)
 
 Greater than or equal comparison.
 
-##### int semver_lte(semver_t a, semver_t b)
+#### int semver_lte(semver_t a, semver_t b)
 
 Lower than or equal comparison.
 
