@@ -78,7 +78,7 @@ semver_parse (const char *str, semver_t *ver) {
  */
 
 int
-semver_compare (const semver_t x, const semver_t y) {
+semver_compare (semver_t x, semver_t y) {
   if (x.major != y.major) {
     if (x.major > y.major) {
       return 1;
@@ -101,6 +101,42 @@ semver_compare (const semver_t x, const semver_t y) {
   }
 
   return 0;
+}
+
+int
+semver_gt (semver_t x, semver_t y) {
+  int resolution = semver_compare(x, y);
+  return resolution == 1 ? 1 : 0;
+}
+
+int
+semver_lt (semver_t x, semver_t y) {
+  int resolution = semver_compare(x, y);
+  return resolution == -1 ? 1 : 0;
+}
+
+int
+semver_eq (semver_t x, semver_t y) {
+  int resolution = semver_compare(x, y);
+  return resolution == 0 ? 1 : 0;
+}
+
+int
+semver_ne (semver_t x, semver_t y) {
+  int resolution = semver_compare(x, y);
+  return resolution == -1 || resolution == 1 ? 1 : 0;
+}
+
+int
+semver_gte (semver_t x, semver_t y) {
+  int resolution = semver_compare(x, y);
+  return resolution == 1 || resolution == 0 ? 1 : 0;
+}
+
+int
+semver_lte (semver_t x, semver_t y) {
+  int resolution = semver_compare(x, y);
+  return resolution == -1 || resolution == 0 ? 1 : 0;
 }
 
 /**

@@ -19,7 +19,7 @@ extern "C" {
 
 typedef struct semver_pr_s {
   int        number;
-  const char version;
+  const char stage;
 } semver_pr_t;
 
 /**
@@ -30,8 +30,7 @@ typedef struct semver_version_s {
   int major;
   int minor;
   int patch;
-  const char stage[50];
-  const char build[50];
+  semver_pr_t pr;
 } semver_t;
 
 /**

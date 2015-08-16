@@ -71,15 +71,41 @@ test_parse_minor() {
   test_end();
 }
 
+static struct test_case {
+  char * x;
+  char * y;
+  int  expected;
+};
+
+typedef int (*fn)(semver_t, semver_t);
+
+static void
+compare_helper (char *a, char *b, int expected, fn test_fn) {
+  semver_t verX;
+  semver_t verY;
+
+  char *x = strdup(a);
+  char *y = strdup(b);
+
+  semver_parse(x, &verX);
+  semver_parse(y, &verY);
+
+  int resolution = test_fn(verX, verY);
+  assert(resolution == expected);
+}
+
+static void
+suite_runner(struct test_case cases[]) {
+  int len = sizeof(cases) / sizeof(cases[0]);
+  for (int i = 0; i < len; i++) {
+    struct test_case args = cases[i];
+    compare_helper(args.x, args.y, args.expected, &semver_compare);
+  }
+}
+
 void
 test_parse_compare() {
-  test_start("parse_compare");
-
-  static struct test_case {
-    char * x;
-    char * y;
-    int  expected;
-  };
+  test_start("semver_compare");
 
   struct test_case cases[] = {
     {"1", "0", 1},
@@ -97,22 +123,135 @@ test_parse_compare() {
     {"1.2.2", "1.2.9", -1},
   };
 
-  int len = sizeof(cases) / sizeof(cases[0]);
-  for (int i = 0; i < len; i++) {
-    semver_t verX;
-    semver_t verY;
-    struct test_case args = cases[i];
+  suite_runner(cases);
+  test_end();
+}
 
-    char *x = strdup(args.x);
-    char *y = strdup(args.y);
+void
+test_parse_gt() {
+  test_start("semver_gt");
 
-    semver_parse(x, &verX);
-    semver_parse(y, &verY);
+  struct test_case cases[] = {
+    {"1", "0", 1},
+    {"1", "3", 0},
+    {"1.5", "0.8", 1},
+    {"1.2", "2.2", 0},
+    {"3.0", "1.5", 1},
+    {"1.0.9", "1.0.0", 1},
+    {"1.0.9", "1.0.9", 0},
+    {"1.1.5", "1.1.9", 0},
+    {"1.2.2", "1.2.9", 0},
+  };
 
-    int resolution = semver_compare(verX, verY);
-    assert(resolution == args.expected);
-  }
+  suite_runner(cases);
+  test_end();
+}
 
+void
+test_parse_lt() {
+  test_start("semver_lt");
+
+  struct test_case cases[] = {
+    {"1", "0", 0},
+    {"1", "3", 1},
+    {"1.5", "0.8", 0},
+    {"1.2", "2.2", 1},
+    {"3.0", "1.5", 0},
+    {"1.0.9", "1.0.0", 0},
+    {"1.0.9", "1.0.9", 1},
+    {"1.1.5", "1.1.9", 1},
+    {"1.2.2", "1.2.9", 1},
+  };
+
+  suite_runner(cases);
+  test_end();
+}
+
+void
+test_parse_eq() {
+  test_start("semver_eq");
+
+  struct test_case cases[] = {
+    {"1", "0", 0},
+    {"1", "3", 0},
+    {"1", "1", 1},
+    {"1.5", "0.8", 0},
+    {"1.2", "2.2", 0},
+    {"3.0", "1.5", 0},
+    {"1.0", "1.0", 1},
+    {"1.0.9", "1.0.0", 0},
+    {"1.1.5", "1.1.9", 0},
+    {"1.2.2", "1.2.9", 0},
+    {"1.0.0", "1.0.0", 1},
+  };
+
+  suite_runner(cases);
+  test_end();
+}
+
+void
+test_parse_ne() {
+  test_start("semver_ne");
+
+  struct test_case cases[] = {
+    {"1", "0", 1},
+    {"1", "3", 1},
+    {"1", "1", 0},
+    {"1.5", "0.8", 1},
+    {"1.2", "2.2", 1},
+    {"3.0", "1.5", 1},
+    {"1.0", "1.0", 0},
+    {"1.0.9", "1.0.0", 1},
+    {"1.1.5", "1.1.9", 1},
+    {"1.2.2", "1.2.9", 1},
+    {"1.0.0", "1.0.0", 0},
+  };
+
+  suite_runner(cases);
+  test_end();
+}
+
+void
+test_parse_gte() {
+  test_start("semver_gte");
+
+  struct test_case cases[] = {
+    {"1", "0", 1},
+    {"1", "3", 0},
+    {"1", "1", 1},
+    {"1.5", "0.8", 1},
+    {"1.2", "2.2", 0},
+    {"3.0", "1.5", 1},
+    {"1.0", "1.0", 1},
+    {"1.0.9", "1.0.0", 1},
+    {"1.1.5", "1.1.9", 0},
+    {"1.2.2", "1.2.9", 0},
+    {"1.0.0", "1.0.0", 1},
+  };
+
+  suite_runner(cases);
+  test_end();
+}
+
+void
+test_parse_lte() {
+  test_start("semver_lte");
+
+  struct test_case cases[] = {
+    {"1", "0", 0},
+    {"1", "3", 1},
+    {"1", "1", 1},
+    {"1.5", "0.8", 0},
+    {"1.2", "2.2", 1},
+    {"3.0", "1.5", 0},
+    {"1.0", "1.0", 1},
+    {"1.0.9", "1.0.0", 0},
+    {"1.1.5", "1.1.9", 1},
+    {"1.2.2", "1.2.9", 1},
+    {"1.0.0", "1.0.0", 1},
+  };
+
+  suite_runner(cases);
   test_end();
 }
 
@@ -144,12 +283,21 @@ test_valid_chars() {
 int
 main() {
 
+  // Parser
   test_parse_simple();
   test_parse_major();
   test_parse_minor();
   test_parse_compare();
 
-  // Helpers
+  // Comparison helpers
+  test_parse_gt();
+  test_parse_lt();
+  test_parse_eq();
+  test_parse_ne();
+  test_parse_gte();
+  test_parse_lte();
+
+  // Private helpers
   test_valid_chars();
 
   return 0;
