@@ -95,11 +95,10 @@ compare_helper (char *a, char *b, int expected, fn test_fn) {
 }
 
 static void
-suite_runner(struct test_case cases[]) {
-  int len = sizeof(cases) / sizeof(cases[0]);
+suite_runner(struct test_case cases[], int len, fn test_fn) {
   for (int i = 0; i < len; i++) {
     struct test_case args = cases[i];
-    compare_helper(args.x, args.y, args.expected, &semver_compare);
+    compare_helper(args.x, args.y, args.expected, test_fn);
   }
 }
 
@@ -123,7 +122,7 @@ test_parse_compare() {
     {"1.2.2", "1.2.9", -1},
   };
 
-  suite_runner(cases);
+  suite_runner(cases, 13, &semver_compare);
   test_end();
 }
 
@@ -134,16 +133,22 @@ test_parse_gt() {
   struct test_case cases[] = {
     {"1", "0", 1},
     {"1", "3", 0},
+    {"3.0", "1", 1},
+    {"1.0", "3", 0},
+    {"1.0", "1", 0},
     {"1.5", "0.8", 1},
     {"1.2", "2.2", 0},
     {"3.0", "1.5", 1},
+    {"1.1", "1.0.9", 1},
+    {"1.0", "1.0.0", 0},
+    {"1.1.9", "1.2", 0},
     {"1.0.9", "1.0.0", 1},
     {"1.0.9", "1.0.9", 0},
     {"1.1.5", "1.1.9", 0},
     {"1.2.2", "1.2.9", 0},
   };
 
-  suite_runner(cases);
+  suite_runner(cases, 15, &semver_gt);
   test_end();
 }
 
@@ -158,12 +163,12 @@ test_parse_lt() {
     {"1.2", "2.2", 1},
     {"3.0", "1.5", 0},
     {"1.0.9", "1.0.0", 0},
-    {"1.0.9", "1.0.9", 1},
+    {"1.0.9", "1.0.9", 0},
     {"1.1.5", "1.1.9", 1},
     {"1.2.2", "1.2.9", 1},
   };
 
-  suite_runner(cases);
+  suite_runner(cases, 9, &semver_lt);
   test_end();
 }
 
@@ -185,7 +190,7 @@ test_parse_eq() {
     {"1.0.0", "1.0.0", 1},
   };
 
-  suite_runner(cases);
+  suite_runner(cases, 11, &semver_eq);
   test_end();
 }
 
@@ -207,7 +212,7 @@ test_parse_ne() {
     {"1.0.0", "1.0.0", 0},
   };
 
-  suite_runner(cases);
+  suite_runner(cases, 11, &semver_ne);
   test_end();
 }
 
@@ -229,7 +234,7 @@ test_parse_gte() {
     {"1.0.0", "1.0.0", 1},
   };
 
-  suite_runner(cases);
+  suite_runner(cases, 11, &semver_gte);
   test_end();
 }
 
@@ -251,7 +256,7 @@ test_parse_lte() {
     {"1.0.0", "1.0.0", 1},
   };
 
-  suite_runner(cases);
+  suite_runner(cases, 11, &semver_lte);
   test_end();
 }
 
