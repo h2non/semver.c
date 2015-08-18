@@ -21,8 +21,8 @@ typedef struct semver_version_s {
   int major;
   int minor;
   int patch;
-  char * build;
   char * stage;
+  char * metadata;
   char * prerelease;
   int pr_version[50];
   int pr_version_count;

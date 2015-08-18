@@ -103,11 +103,20 @@ semver_parse_prerelease (const char *str, semver_t *ver) {
   while (slice != NULL) {
     count++;
 
-    if (count == 1 && semver_is_alpha(slice)) {
+    if (semver_is_alpha(slice)) {
+      if (ver->stage != NULL) {
+        char *buf = malloc( sizeof(ver->stage) + sizeof(slice) );
+        strcpy(buf, ver->stage);
+        strcat (str, slice);
+        ver->stage = buf;
+
+        slice = strtok(NULL, DELIMITER);
+        continue;
+      }
+
       char *buf = malloc(sizeof(slice));
       strcpy(buf, slice);
       ver->stage = buf;
-      printf("\nSemver: %s\n", ver->stage);
       slice = strtok(NULL, DELIMITER);
       continue;
     }
