@@ -12,16 +12,46 @@
 #include "version.h"
 
 #define NUMBERS "0123456789"
-#define LETTERS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+#define ALPHA "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DELIMITER "."
 #define SLICE_SIZE 50
 
+char*
+substr (const char* input, int offset, int len, char* dest) {
+  int input_len = strlen(input);
+  if (offset + len > input_len) return NULL;
+
+  strncpy (dest, input + offset, len);
+  return dest;
+}
+
 int
 semver_parse (const char *str, semver_t *ver) {
+  char buf[strlen(str)];
+  char * version[strlen(str)];
+  strcpy(buf, str);
+
+  char * pch = strchr(buf, '-');
+  if (pch != NULL) {
+    int slice = pch - buf + 1;
+    char * tail = buf + slice;
+    int valid = semver_parse_prerelease(tail, ver);
+    if (valid == -1) return -1;
+
+    char buf2[strlen(str)];
+    substr(str, 0, slice - 1, version);
+  } else {
+    strcpy(version, str);
+  }
+
+  return semver_parse_version(version, ver);
+}
+
+int
+semver_parse_version (const char *str, semver_t *ver) {
   char major_s[SLICE_SIZE] = "0";
   char minor_s[SLICE_SIZE] = "0";
   char patch_s[SLICE_SIZE] = "0";
-  char tail_s[SLICE_SIZE]  = "0";
 
   char * slice = strtok((char*)str, DELIMITER);
 
@@ -36,16 +66,11 @@ semver_parse (const char *str, semver_t *ver) {
       case 1: strcpy(major_s, slice); break;
       case 2: strcpy(minor_s, slice); break;
       case 3: strcpy(patch_s, slice); break;
-      case 4: strcpy(tail_s, slice); break;
     }
 
     if (count == 3) break;
     slice = strtok(NULL, DELIMITER);
   }
-
-  //printf("Major: %s\n", major_s);
-  //printf("Minor: %s\n", minor_s);
-  //printf("Patch: %s\n", patch_s);
 
   int major = semver_parse_int(major_s);
   if (major == -1) return major;
@@ -58,6 +83,57 @@ semver_parse (const char *str, semver_t *ver) {
   int patch = semver_parse_int(patch_s);
   if (patch == -1) return patch;
   ver->patch = patch;
+
+  return 0;
+}
+
+int
+semver_parse_prerelease (const char *str, semver_t *ver) {
+  size_t len = strlen(str);
+  if (len > SLICE_SIZE) return -1;
+
+  char * buf[len];
+  strcpy(buf, str);
+
+  char * slice = strtok(buf, DELIMITER);
+
+  int count = 0;
+  int vcount = 0;
+
+  while (slice != NULL) {
+    count++;
+
+    if (count == 1 && semver_is_alpha(slice)) {
+      char *buf = malloc(sizeof(slice));
+      strcpy(buf, slice);
+      ver->stage = buf;
+      printf("\nSemver: %s\n", ver->stage);
+      slice = strtok(NULL, DELIMITER);
+      continue;
+    }
+
+    if (semver_is_number(slice)) {
+      int num = semver_parse_int(slice);
+      if (num == -1) return num;
+      ver->pr_version[vcount] = num;
+    }
+
+    if (semver_is_alpha(slice)) {
+      for (int i = 0; i < len; i++) {
+        char v = slice[i];
+        ver->pr_version[vcount] = (int)v;
+      }
+    }
+
+    vcount++;
+    slice = strtok(NULL, DELIMITER);
+  }
+
+  char *prerelease = malloc(sizeof(str));
+  strcpy(prerelease, str);
+  ver->prerelease = prerelease;
+
+  ver->pr_version_count = vcount;
 
   return 0;
 }
@@ -95,6 +171,14 @@ semver_compare (semver_t x, semver_t y) {
   }
 
   return 0;
+}
+
+void
+semver_free (semver_t *x) {
+  free(x->stage);
+  free(x->build);
+  free(x->prerelease);
+  free(x);
 }
 
 int
@@ -142,6 +226,16 @@ semver_parse_int (const char *s) {
   int invalid = semver_valid_chars(s, NUMBERS);
   if (invalid) return -1;
   return strtol(s, NULL, 10);
+}
+
+int
+semver_is_alpha (const char *s) {
+  return semver_valid_chars(s, ALPHA) == 0 ? 1 : 0;
+}
+
+int
+semver_is_number (const char *s) {
+  return semver_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
 }
 
 int

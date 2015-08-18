@@ -17,9 +17,37 @@
 #define test_end() \
   printf("OK\n")  \
 
-/**
- * Simple string parsing
- */
+struct test_case {
+  char * x;
+  char * y;
+  int  expected;
+};
+
+typedef int (*fn)(semver_t, semver_t);
+
+static void
+compare_helper (char *a, char *b, int expected, fn test_fn) {
+  semver_t verX;
+  semver_t verY;
+
+  char *x = strdup(a);
+  char *y = strdup(b);
+
+  semver_parse(x, &verX);
+  semver_parse(y, &verY);
+
+  int resolution = test_fn(verX, verY);
+  assert(resolution == expected);
+}
+
+static void
+suite_runner(struct test_case cases[], int len, fn test_fn) {
+  for (int i = 0; i < len; i++) {
+    struct test_case args = cases[i];
+    compare_helper(args.x, args.y, args.expected, test_fn);
+  }
+}
+
 void
 test_parse_simple() {
   test_start("parse_simple");
@@ -71,35 +99,29 @@ test_parse_minor() {
   test_end();
 }
 
-struct test_case {
-  char * x;
-  char * y;
-  int  expected;
-};
+void
+test_parse_prerelease() {
+  test_start("parse_prerelease");
 
-typedef int (*fn)(semver_t, semver_t);
+  char buf[] = "1.2.12-beta.1.1";
+  semver_t ver;
 
-static void
-compare_helper (char *a, char *b, int expected, fn test_fn) {
-  semver_t verX;
-  semver_t verY;
+  int error = semver_parse(buf, &ver);
 
-  char *x = strdup(a);
-  char *y = strdup(b);
+  assert(error == 0);
+  assert(ver.major == 1);
+  assert(ver.minor == 2);
+  assert(ver.patch == 12);
+  assert(strcmp(ver.prerelease, "beta.1.1") == 0);
 
-  semver_parse(x, &verX);
-  semver_parse(y, &verY);
+  assert(strcmp(ver.stage, "beta") == 0);
+  assert(ver.pr_version[0] == 1);
+  assert(ver.pr_version[1] == 1);
 
-  int resolution = test_fn(verX, verY);
-  assert(resolution == expected);
-}
+  //printf("Size: %d\n", ver.pr_version_count);
+  assert(ver.pr_version_count == 2);
 
-static void
-suite_runner(struct test_case cases[], int len, fn test_fn) {
-  for (int i = 0; i < len; i++) {
-    struct test_case args = cases[i];
-    compare_helper(args.x, args.y, args.expected, test_fn);
-  }
+  test_end();
 }
 
 void
@@ -292,7 +314,9 @@ main() {
   test_parse_simple();
   test_parse_major();
   test_parse_minor();
+  test_parse_prerelease();
   test_parse_compare();
+  //semver_compare_prerelease();
 
   // Comparison helpers
   test_parse_gt();

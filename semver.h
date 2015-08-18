@@ -14,15 +14,6 @@ extern "C" {
 #endif
 
 /**
- * pre_release struct
- */
-
-typedef struct semver_pr_s {
-  int        number;
-  const char stage;
-} semver_pr_t;
-
-/**
  * version struct
  */
 
@@ -30,7 +21,11 @@ typedef struct semver_version_s {
   int major;
   int minor;
   int patch;
-  semver_pr_t pr;
+  char * build;
+  char * stage;
+  char * prerelease;
+  int pr_version[50];
+  int pr_version_count;
 } semver_t;
 
 /**
