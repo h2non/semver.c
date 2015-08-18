@@ -103,7 +103,7 @@ void
 test_parse_prerelease() {
   test_start("parse_prerelease");
 
-  char buf[] = "1.2.12-beta.1.1";
+  char buf[] = "1.2.12-beta.alpha.1.1";
   semver_t ver;
 
   int error = semver_parse(buf, &ver);
@@ -112,14 +112,7 @@ test_parse_prerelease() {
   assert(ver.major == 1);
   assert(ver.minor == 2);
   assert(ver.patch == 12);
-  assert(strcmp(ver.prerelease, "beta.1.1") == 0);
-
-  assert(strcmp(ver.stage, "beta") == 0);
-  assert(ver.pr_version[0] == 1);
-  assert(ver.pr_version[1] == 1);
-
-  //printf("Size: %d\n", ver.pr_version_count);
-  assert(ver.pr_version_count == 2);
+  assert(strcmp(ver.prerelease, "beta.alpha.1.1") == 0);
 
   test_end();
 }

@@ -13,6 +13,8 @@
 - [x] Version comparison
 - [x] Comparison helpers
 - [ ] Comparison operators
+- [ ] Version bump helpers
+- [ ] Stringify
 - [ ] 100% coverage
 - [ ] Fuzz testing
 

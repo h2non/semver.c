@@ -12,12 +12,12 @@
 #include "version.h"
 
 #define NUMBERS "0123456789"
-#define ALPHA "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define ALPHA   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DELIMITER "."
 #define SLICE_SIZE 50
 
-char*
-substr (const char* input, int offset, int len, char* dest) {
+char *
+substr (const char *input, int offset, int len, char *dest) {
   int input_len = strlen(input);
   if (offset + len > input_len) return NULL;
 
@@ -29,16 +29,29 @@ int
 semver_parse (const char *str, semver_t *ver) {
   char buf[strlen(str)];
   char * version[strlen(str)];
-  strcpy(buf, str);
 
-  char * pch = strchr(buf, '-');
-  if (pch != NULL) {
-    int slice = pch - buf + 1;
-    char * tail = buf + slice;
-    int valid = semver_parse_prerelease(tail, ver);
-    if (valid == -1) return -1;
+  char * meta = strchr(str, '+');
+  if (meta != NULL) {
+    int slice = meta - str + 1;
+    char * tail = str + slice;
 
-    char buf2[strlen(str)];
+    //int valid = semver_is_valid(tail);
+    //if (!valid) return -1;
+
+    substr(str, 0, slice - 1, str);
+    printf("MEta: %s\n", meta);
+    printf("Buf: %s\n", str);
+  }
+
+  char * pr = strchr(str, '-');
+  if (pr != NULL) {
+    int slice = pr - str + 1;
+    char * tail = str + slice;
+    char * prerelease = malloc(sizeof(tail));
+    strcpy(prerelease, tail);
+    ver->prerelease = prerelease;
+    //int valid = semver_is_valid(tail);
+    //if (!valid) return -1;
     substr(str, 0, slice - 1, version);
   } else {
     strcpy(version, str);
@@ -104,10 +117,10 @@ semver_parse_prerelease (const char *str, semver_t *ver) {
     count++;
 
     if (semver_is_alpha(slice)) {
-      if (ver->stage != NULL) {
+      if (count > 1 && ver->stage != NULL) {
         char *buf = malloc( sizeof(ver->stage) + sizeof(slice) );
         strcpy(buf, ver->stage);
-        strcat (str, slice);
+        strcat(str, slice);
         ver->stage = buf;
 
         slice = strtok(NULL, DELIMITER);
@@ -185,7 +198,7 @@ semver_compare (semver_t x, semver_t y) {
 void
 semver_free (semver_t *x) {
   free(x->stage);
-  free(x->build);
+  free(x->metadata);
   free(x->prerelease);
   free(x);
 }
