@@ -50,6 +50,7 @@ semver_parse (const char *str, semver_t *ver) {
     char * prerelease = malloc(sizeof(tail));
     strcpy(prerelease, tail);
     ver->prerelease = prerelease;
+
     //int valid = semver_is_valid(tail);
     //if (!valid) return -1;
     substr(str, 0, slice - 1, version);
