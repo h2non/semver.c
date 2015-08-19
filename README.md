@@ -7,9 +7,8 @@
 ## Features
 
 - [x] Basic parsing
-- [ ] Version stage parsing
-- [ ] Version build parsing
-- [ ] Version prerelease parsing
+- [x] Version metadata parsing
+- [x] Version prerelease parsing
 - [x] Version comparison
 - [x] Comparison helpers
 - [ ] Comparison operators

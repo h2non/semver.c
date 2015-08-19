@@ -21,55 +21,54 @@ substr (const char *input, int offset, int len, char *dest) {
   int input_len = strlen(input);
   if (offset + len > input_len) return NULL;
 
-  strncpy (dest, input + offset, len);
+  strncpy(dest, input + offset, len);
   return dest;
 }
 
 int
-semver_parse (const char *str, semver_t *ver) {
-  int copy = 0;
-  char buf[strlen(str)];
-  char * version[strlen(str)];
+strcut (char *str, int begin, int len) {
+  int l = strlen(str);
 
-  char * meta = strchr(str, '+');
-  if (meta != NULL) {
-    int slice = meta - str + 1;
-    char * tail = str + slice;
+  if (len < 0) len = l - begin;
+  if (begin + len > l) len = l - begin;
+  memmove(str + begin, str + begin + len, l - len + 1);
 
-    //int valid = semver_is_valid(tail);
-    //if (!valid) return -1;
+  return len;
+}
 
-    char * metadata = malloc(sizeof(tail));
-    strcpy(metadata, tail);
-    ver->metadata = metadata;
+char *
+semver_parse_slice (const char *str, char *buf, char sep) {
+  int len = strlen(str);
 
-    substr(str, 0, slice - 1, version);
-    //printf("MEta: %s\n", metadata);
-    //printf("Buf: %s\n", version);
-    copy = 1;
-  }
-
-  char * pr = strchr(str, '-');
+  char * pr = strchr(buf, sep);
   if (pr != NULL) {
     int slice = pr - str + 1;
     char * tail = str + slice;
 
-    //int valid = semver_is_valid(tail);
-    //if (!valid) return -1;
+    char * data = malloc(sizeof(tail));
+    strcpy(data, tail);
 
-    char * prerelease = malloc(sizeof(tail));
-    strcpy(prerelease, tail);
-    ver->prerelease = prerelease;
+    int offset = strlen(buf) - strlen(tail) -  1;
+    strcut(buf, offset, len);
 
-    if (copy == 0) {
-      substr(str, 0, slice - 1, version);
-      copy = 1;
-    }
+    return data;
   }
 
-  if (copy == 0) strcpy(version, str);
+  return NULL;
+}
 
-  return semver_parse_version(version, ver);
+int
+semver_parse (const char *str, semver_t *ver) {
+  char * buf[strlen(str)];
+  strcpy(buf, str);
+
+  int valid = semver_is_valid(buf);
+  if (!valid) return -1;
+
+  ver->metadata = semver_parse_slice(str, buf, '+');
+  ver->prerelease = semver_parse_slice(str, buf, '-');
+
+  return semver_parse_version(buf, ver);
 }
 
 int
@@ -183,33 +182,43 @@ semver_parse_prerelease (const char *str, semver_t *ver) {
 
 int
 semver_compare (semver_t x, semver_t y) {
-  if (x.major != y.major) {
-    if (x.major > y.major) {
-      return 1;
-    }
-    return -1;
-  }
+  int matches = semver_compare_version(x, y);
+  if (matches) return matches;
 
-  if (x.minor != y.minor) {
-    if (x.minor > y.minor) {
-      return 1;
-    }
-    return -1;
-  }
+  // To do: prerelease and meta comparisons
 
-  if (x.patch != y.patch) {
-    if (x.patch > y.patch) {
+  return 0;
+}
+
+static int
+compare_versions (int x, int y) {
+  if (x != y) {
+    if (x > y) {
       return 1;
     }
     return -1;
   }
+  return 0;
+}
+
+int
+semver_compare_version (semver_t x, semver_t y) {
+  int match;
+
+  match = compare_versions(x.major, y.major);
+  if (match) return match;
+
+  match = compare_versions(x.minor, y.minor);
+  if (match) return match;
+
+  match = compare_versions(x.patch, y.patch);
+  if (match) return match;
 
   return 0;
 }
 
 void
 semver_free (semver_t *x) {
-  free(x->stage);
   free(x->metadata);
   free(x->prerelease);
   free(x);
@@ -270,6 +279,12 @@ semver_is_alpha (const char *s) {
 int
 semver_is_number (const char *s) {
   return semver_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
+}
+
+int
+semver_is_valid (const char *s) {
+  char tokens[] = NUMBERS ALPHA ".-+";
+  return semver_valid_chars(s, tokens) == 0 ? 1 : 0;
 }
 
 int
