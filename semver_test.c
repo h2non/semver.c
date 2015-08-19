@@ -118,6 +118,24 @@ test_parse_prerelease() {
 }
 
 void
+test_parse_metadata() {
+  test_start("parse_prerelease");
+
+  char buf[] = "1.2.12+20130313144700";
+  semver_t ver;
+
+  int error = semver_parse(buf, &ver);
+
+  assert(error == 0);
+  assert(ver.major == 1);
+  assert(ver.minor == 2);
+  assert(ver.patch == 12);
+  assert(strcmp(ver.metadata, "20130313144700") == 0);
+
+  test_end();
+}
+
+void
 test_parse_compare() {
   test_start("semver_compare");
 
@@ -308,6 +326,7 @@ main() {
   test_parse_major();
   test_parse_minor();
   test_parse_prerelease();
+  test_parse_metadata();
   test_parse_compare();
   //semver_compare_prerelease();
 

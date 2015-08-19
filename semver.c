@@ -27,6 +27,7 @@ substr (const char *input, int offset, int len, char *dest) {
 
 int
 semver_parse (const char *str, semver_t *ver) {
+  int copy = 0;
   char buf[strlen(str)];
   char * version[strlen(str)];
 
@@ -38,25 +39,35 @@ semver_parse (const char *str, semver_t *ver) {
     //int valid = semver_is_valid(tail);
     //if (!valid) return -1;
 
-    substr(str, 0, slice - 1, str);
-    printf("MEta: %s\n", meta);
-    printf("Buf: %s\n", str);
+    char * metadata = malloc(sizeof(tail));
+    strcpy(metadata, tail);
+    ver->metadata = metadata;
+
+    substr(str, 0, slice - 1, version);
+    //printf("MEta: %s\n", metadata);
+    //printf("Buf: %s\n", version);
+    copy = 1;
   }
 
   char * pr = strchr(str, '-');
   if (pr != NULL) {
     int slice = pr - str + 1;
     char * tail = str + slice;
+
+    //int valid = semver_is_valid(tail);
+    //if (!valid) return -1;
+
     char * prerelease = malloc(sizeof(tail));
     strcpy(prerelease, tail);
     ver->prerelease = prerelease;
 
-    //int valid = semver_is_valid(tail);
-    //if (!valid) return -1;
-    substr(str, 0, slice - 1, version);
-  } else {
-    strcpy(version, str);
+    if (copy == 0) {
+      substr(str, 0, slice - 1, version);
+      copy = 1;
+    }
   }
+
+  if (copy == 0) strcpy(version, str);
 
   return semver_parse_version(version, ver);
 }
