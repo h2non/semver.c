@@ -1,20 +1,21 @@
-# server.c [![Build Status](https://travis-ci.org/h2non/semver.c.png)](https://travis-ci.org/h2non/semver.c)
+# semver.c [![Build Status](https://travis-ci.org/h2non/semver.c.png)](https://travis-ci.org/h2non/semver.c)
 
-[semver](http://semver.org) v2.0 compliant parser written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
+[Semantic version](http://semver.org) v2.0 compliant parser and render written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
 
 **This is much a work in progress**
 
 ## Features
 
-- [x] Basic parsing
+- [x] Full spec parsing
 - [x] Version metadata parsing
 - [x] Version prerelease parsing
 - [x] Version comparison
 - [x] Comparison helpers
-- [ ] Comparison operators
-- [ ] Version bump helpers
-- [ ] Stringify
+- [-] Comparison operators
+- [-] Version render
+- [ ] Version bump
 - [ ] 100% coverage
+- [x] No regex (actually ANSI C doesn't support it)
 - [ ] Fuzz testing
 
 ## Usage

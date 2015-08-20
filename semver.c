@@ -11,12 +11,24 @@
 #include "semver.h"
 #include "version.h"
 
-#define NUMBERS "0123456789"
-#define ALPHA   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define DELIMITER "."
+#define NUMBERS    "0123456789"
+#define ALPHA      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define TOKENS     ".-+"
+#define DELIMITER  "."
+#define MAX_SIZE   sizeof(char) * 255
 #define SLICE_SIZE 50
 
-char *
+const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
+
+static enum operators {
+  GT  = 0x3e,
+  LT  = 0x3c,
+  EQ  = 0x3d,
+  TF  = 0x7e,
+  AF  = 0x5e
+};
+
+static char *
 substr (const char *input, int offset, int len, char *dest) {
   int input_len = strlen(input);
   if (offset + len > input_len) return NULL;
@@ -25,7 +37,7 @@ substr (const char *input, int offset, int len, char *dest) {
   return dest;
 }
 
-int
+static int
 strcut (char *str, int begin, int len) {
   int l = strlen(str);
 
@@ -41,20 +53,24 @@ semver_parse_slice (const char *str, char *buf, char sep) {
   int len = strlen(str);
 
   char * pr = strchr(buf, sep);
-  if (pr != NULL) {
-    int slice = pr - str + 1;
-    char * tail = str + slice;
+  if (pr == NULL) return pr;
+  int plen = strlen(pr);
 
-    char * data = malloc(sizeof(tail));
-    strcpy(data, tail);
+  // Extract the slice from buffer
+  int size = sizeof(*pr) * plen;
+  char * cache[size];
+  strcpy(cache, buf);
+  strcut(cache, 0, strlen(buf) - plen + 1);
 
-    int offset = strlen(buf) - strlen(tail) -  1;
-    strcut(buf, offset, len);
+  // Allocate in heap
+  char * part = malloc(size);
+  strcpy(part, cache);
 
-    return data;
-  }
+  // Remove chars from original buffer buffer
+  int offset = strlen(buf) - strlen(pr);
+  strcut(buf, offset, len);
 
-  return NULL;
+  return part;
 }
 
 int
@@ -112,7 +128,7 @@ semver_parse_version (const char *str, semver_t *ver) {
 }
 
 int
-semver_parse_prerelease (const char *str, semver_t *ver) {
+semver_parse_prerelease (const char *str, struct metadata_t *ver) {
   size_t len = strlen(str);
   if (len > SLICE_SIZE) return -1;
 
@@ -185,7 +201,14 @@ semver_compare (semver_t x, semver_t y) {
   int matches = semver_compare_version(x, y);
   if (matches) return matches;
 
-  // To do: prerelease and meta comparisons
+  if (x.prerelease != NULL) {
+    struct metadata_t xm;
+    semver_parse_prerelease(x.prerelease, &xm);
+  }
+
+  if (x.metadata != NULL) {
+    // To do: metadata comparison
+  }
 
   return 0;
 }
@@ -215,13 +238,6 @@ semver_compare_version (semver_t x, semver_t y) {
   if (match) return match;
 
   return 0;
-}
-
-void
-semver_free (semver_t *x) {
-  free(x->metadata);
-  free(x->prerelease);
-  free(x);
 }
 
 int
@@ -260,6 +276,88 @@ semver_lte (semver_t x, semver_t y) {
   return resolution == -1 || resolution == 0 ? 1 : 0;
 }
 
+int
+semver_match (const char * operator, semver_t x, semver_t y) {
+  int len = strlen(operator);
+  if (len == 0) return -1;
+
+  int op[2];
+  len = len > 2 ? 2 : len;
+  for (int i = 0; i < len; i++) {
+    op[i] = (int) operator[i];
+  }
+
+  // Match operator and perform the comparison
+  if (op[0] == GT) {
+    if (op[1] == EQ) {
+      return semver_gte(x, y);
+    }
+    return semver_gt(x, y);
+  }
+
+  if (op[0] == LT) {
+    if (op[1] == EQ) {
+      return semver_lte(x, y);
+    }
+    return semver_lt(x, y);
+  }
+
+  if (op[0] == EQ) {
+    return semver_eq(x, y);
+  }
+
+  if (op[0] == TF) {
+    return semver_gte(x, y);
+  }
+
+  if (op[0] == AF) {
+    return semver_gte(x, y);
+  }
+
+  return -1;
+}
+
+void
+semver_free (semver_t *x) {
+  free(x->metadata);
+  free(x->prerelease);
+  free(x);
+}
+
+/**
+ * Renders
+ */
+
+static void
+concat_num (char * str, int x, char * sep) {
+  char buf[MAX_SIZE];
+  if (sep == NULL) sprintf(buf, "%d", x);
+  else sprintf(buf, "%s%d", sep, x);
+  strcat(str, buf);
+}
+
+static void
+concat_char (char * str, char * x, char * sep) {
+  char buf[MAX_SIZE];
+  printf("Concat char: %s\n", str);
+  sprintf(buf, "%s%s", sep, x);
+  strcat(str, buf);
+}
+
+int
+semver_render (semver_t *x, char * dest) {
+  char * buf[MAX_SIZE];
+
+  if (x->major) concat_num(buf, x->major, NULL);
+  if (x->minor) concat_num(buf, x->minor, ".");
+  if (x->patch) concat_num(buf, x->patch, ".");
+  if (x->prerelease) concat_char(buf, x->prerelease, "-");
+  if (x->metadata) concat_char(buf, x->metadata, "+");
+
+  strcpy(dest, buf);
+  return 0;
+}
+
 /**
  * Helpers
  */
@@ -268,7 +366,9 @@ int
 semver_parse_int (const char *s) {
   int invalid = semver_valid_chars(s, NUMBERS);
   if (invalid) return -1;
-  return strtol(s, NULL, 10);
+  int num = strtol(s, NULL, 10);
+  if (num > MAX_SAFE_INT) return -1;
+  return num;
 }
 
 int

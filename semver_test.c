@@ -30,8 +30,8 @@ compare_helper (char *a, char *b, int expected, fn test_fn) {
   semver_t verX;
   semver_t verY;
 
-  char *x = strdup(a);
-  char *y = strdup(b);
+  char * x = strdup(a);
+  char * y = strdup(b);
 
   semver_parse(x, &verX);
   semver_parse(y, &verY);
@@ -155,7 +155,7 @@ test_parse_prerelerease_metadata() {
 }
 
 void
-test_parse_compare() {
+test_compare() {
   test_start("semver_compare");
 
   struct test_case cases[] = {
@@ -179,7 +179,19 @@ test_parse_compare() {
 }
 
 void
-test_parse_gt() {
+test_compare_full() {
+  test_start("semver_compare_full");
+
+  struct test_case cases[] = {
+    {"1.5.1-beta.1", "1.5.1-alpha.1", 0},
+  };
+
+  suite_runner(cases, 1, &semver_compare);
+  test_end();
+}
+
+void
+test_compare_gt() {
   test_start("semver_gt");
 
   struct test_case cases[] = {
@@ -205,7 +217,7 @@ test_parse_gt() {
 }
 
 void
-test_parse_lt() {
+test_compare_lt() {
   test_start("semver_lt");
 
   struct test_case cases[] = {
@@ -225,7 +237,7 @@ test_parse_lt() {
 }
 
 void
-test_parse_eq() {
+test_compare_eq() {
   test_start("semver_eq");
 
   struct test_case cases[] = {
@@ -247,7 +259,7 @@ test_parse_eq() {
 }
 
 void
-test_parse_ne() {
+test_compare_ne() {
   test_start("semver_ne");
 
   struct test_case cases[] = {
@@ -269,7 +281,7 @@ test_parse_ne() {
 }
 
 void
-test_parse_gte() {
+test_compare_gte() {
   test_start("semver_gte");
 
   struct test_case cases[] = {
@@ -291,7 +303,7 @@ test_parse_gte() {
 }
 
 void
-test_parse_lte() {
+test_compare_lte() {
   test_start("semver_lte");
 
   struct test_case cases[] = {
@@ -309,6 +321,48 @@ test_parse_lte() {
   };
 
   suite_runner(cases, 11, &semver_lte);
+  test_end();
+}
+
+
+void
+test_match() {
+  test_start("semver_match");
+
+  semver_t x = {1, 2, 6};
+  semver_t y = {1, 6, 0};
+
+  assert(semver_match(">=", x, y) == 0);
+  assert(semver_match("<=", x, y) == 1);
+  assert(semver_match(">", x, y)  == 0);
+  assert(semver_match("<", x, y)  == 1);
+  assert(semver_match("=", x, y)  == 0);
+  // to do
+  assert(semver_match("^", x, y)  == 0);
+  assert(semver_match("~", x, y)  == 0);
+
+  test_end();
+}
+
+/**
+ * Renders
+ */
+void
+test_render() {
+  test_start("valid_render");
+
+  semver_t ver = {1, 5, 8};
+  char * str[1];
+  semver_render(&ver, str);
+  assert(strcmp(str, "1.5.8") == 0);
+
+  semver_t ver2 = {1, 5, 8};
+  ver2.prerelease = "alpha.1";
+  ver2.metadata = "1232323";
+  char * str2[1];
+  semver_render(&ver2, str2);
+  assert(strcmp(str2, "1.5.8-alpha.1+1232323") == 0);
+
   test_end();
 }
 
@@ -347,16 +401,20 @@ main() {
   test_parse_prerelease();
   test_parse_metadata();
   test_parse_prerelerease_metadata();
-  test_parse_compare();
-  //semver_compare_prerelease();
 
-  // Comparison helpers
-  test_parse_gt();
-  test_parse_lt();
-  test_parse_eq();
-  test_parse_ne();
-  test_parse_gte();
-  test_parse_lte();
+  // Comparison
+  test_compare();
+  test_compare_full();
+  test_compare_gt();
+  test_compare_lt();
+  test_compare_eq();
+  test_compare_ne();
+  test_compare_gte();
+  test_compare_lte();
+  test_match();
+
+  // Render
+  //test_render();
 
   // Private helpers
   test_valid_chars();
