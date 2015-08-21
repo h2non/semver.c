@@ -183,10 +183,21 @@ test_compare_full() {
   test_start("semver_compare_full");
 
   struct test_case cases[] = {
-    {"1.5.1-beta.1", "1.5.1-alpha.1", 0},
+    {"1.5.1", "1.5.1-beta", 1},
+    {"1.5.1-beta", "1.5.1", -1},
+    {"1.5.1-beta", "1.5.1-beta", 0},
+    {"1.5.1-beta", "1.5.1-alpha", 1},
+    {"1.5.1-beta.1", "1.5.1-alpha.1", 1},
+    {"1.5.1-beta.1", "1.5.1-beta.0", 1},
+    {"1.5.1-beta.1.5", "1.5.1-beta.1.5", 0},
+    {"1.5.1-beta.1.5", "1.5.1-beta.1.4", 1},
+    {"1.5.1-beta.1.0", "1.5.1-beta.1.4", -1},
+    {"1.5.1-beta.1.0", "1.5.1-alpha.1.0", 1},
+    {"1.5.1-beta.1.100", "1.5.1-alpha.1.99", 1},
+    {"1.5.1-beta.1.123456789", "1.5.1-alpha.1.12345678", 1},
   };
 
-  suite_runner(cases, 1, &semver_compare);
+  suite_runner(cases, 12, &semver_compare);
   test_end();
 }
 

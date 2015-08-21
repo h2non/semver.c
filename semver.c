@@ -25,7 +25,7 @@ static enum operators {
   LT  = 0x3c,
   EQ  = 0x3d,
   TF  = 0x7e,
-  AF  = 0x5e
+  CF  = 0x5e
 };
 
 static char *
@@ -143,6 +143,8 @@ semver_parse_prerelease (const char *str, struct metadata_t *ver) {
   while (slice != NULL) {
     count++;
 
+    if (count > SLICE_SIZE) return -1;
+
     if (semver_is_alpha(slice)) {
       if (count > 1 && ver->stage != NULL) {
         char *buf = malloc( sizeof(ver->stage) + sizeof(slice) );
@@ -201,9 +203,36 @@ semver_compare (semver_t x, semver_t y) {
   int matches = semver_compare_version(x, y);
   if (matches) return matches;
 
-  if (x.prerelease != NULL) {
+  if (x.metadata == NULL
+      && x.prerelease != NULL
+      && y.prerelease == NULL) return -1;
+  if (x.metadata == NULL
+      && x.prerelease == NULL
+      && y.prerelease != NULL) return 1;
+
+  if (x.prerelease != NULL && y.prerelease != NULL) {
     struct metadata_t xm;
+    struct metadata_t ym;
     semver_parse_prerelease(x.prerelease, &xm);
+    semver_parse_prerelease(y.prerelease, &ym);
+
+    if (xm.stage != NULL && ym.stage != NULL) {
+      int xl = strlen(xm.stage);
+      int yl = strlen(ym.stage);
+      if (xl > yl) return -1;
+      if (xl < yl) return 1;
+    } else {
+      if (xm.stage == NULL && ym.stage != NULL) return 1;
+      if (xm.stage != NULL && ym.stage == NULL) return -1;
+    }
+
+    for (int i = 0; i < xm.pr_version_count; i++) {
+      if (ym.pr_version_count < i) return 1;
+      int xv = xm.pr_version[i];
+      int yv = ym.pr_version[i];
+      if (xv > yv) return 1;
+      if (xv < yv) return -1;
+    }
   }
 
   if (x.metadata != NULL) {
@@ -310,7 +339,7 @@ semver_match (const char * operator, semver_t x, semver_t y) {
     return semver_gte(x, y);
   }
 
-  if (op[0] == AF) {
+  if (op[0] == CF) {
     return semver_gte(x, y);
   }
 
@@ -339,7 +368,6 @@ concat_num (char * str, int x, char * sep) {
 static void
 concat_char (char * str, char * x, char * sep) {
   char buf[MAX_SIZE];
-  printf("Concat char: %s\n", str);
   sprintf(buf, "%s%s", sep, x);
   strcat(str, buf);
 }

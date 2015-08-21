@@ -26,9 +26,6 @@ typedef struct semver_version_s {
 } semver_t;
 
 struct metadata_t {
-  int major;
-  int minor;
-  int patch;
   char * stage;
   char * prerelease;
   int pr_version[50];
@@ -38,6 +35,9 @@ struct metadata_t {
 /**
  * Set prototypes
  */
+
+int
+semver_satisfies (semver_t x, semver_t y);
 
 int
 semver_compare (semver_t x, semver_t y);
