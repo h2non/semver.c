@@ -270,8 +270,8 @@ test_compare_eq() {
 }
 
 void
-test_compare_ne() {
-  test_start("semver_ne");
+test_compare_neq() {
+  test_start("semver_neq");
 
   struct test_case cases[] = {
     {"1", "0", 1},
@@ -287,7 +287,7 @@ test_compare_ne() {
     {"1.0.0", "1.0.0", 0},
   };
 
-  suite_runner(cases, 11, &semver_ne);
+  suite_runner(cases, 11, &semver_neq);
   test_end();
 }
 
@@ -419,7 +419,7 @@ main() {
   test_compare_gt();
   test_compare_lt();
   test_compare_eq();
-  test_compare_ne();
+  test_compare_neq();
   test_compare_gte();
   test_compare_lte();
   test_match();

@@ -1,4 +1,4 @@
-# semver.c [![Build Status](https://travis-ci.org/h2non/semver.c.png)](https://travis-ci.org/h2non/semver.c)
+# semver.c [![Build Status](https://travis-ci.org/h2non/semver.c.png)](https://travis-ci.org/h2non/semver.c) [![GitHub release](https://img.shields.io/github/tag/h2non/semver.c.svg)](https://github.com/h2non/semver.c/releases)
 
 [Semantic version](http://semver.org) v2.0 compliant parser and render written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
 

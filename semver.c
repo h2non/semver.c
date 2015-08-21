@@ -288,21 +288,21 @@ semver_eq (semver_t x, semver_t y) {
 }
 
 int
-semver_ne (semver_t x, semver_t y) {
+semver_neq (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
-  return resolution == -1 || resolution == 1 ? 1 : 0;
+  return resolution != 0;
 }
 
 int
 semver_gte (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
-  return resolution == 1 || resolution == 0 ? 1 : 0;
+  return resolution >= 0;
 }
 
 int
 semver_lte (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
-  return resolution == -1 || resolution == 0 ? 1 : 0;
+  return resolution <= 0;
 }
 
 int

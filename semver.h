@@ -58,7 +58,7 @@ int
 semver_eq (semver_t x, semver_t y);
 
 int
-semver_ne (semver_t x, semver_t y);
+semver_neq (semver_t x, semver_t y);
 
 int
 semver_parse (const char *str, semver_t *ver);
