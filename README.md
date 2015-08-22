@@ -156,6 +156,10 @@ Greater than or equal comparison.
 
 Lower than or equal comparison.
 
+#### semver_sender(semver_t *v, char *dest) => void
+
+Render as string.
+
 #### semver_bump(semver_t *a) => void
 
 Bump major version.
