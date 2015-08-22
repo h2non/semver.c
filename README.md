@@ -129,8 +129,8 @@ based on the given comparison operator.
 
 **Returns**:
 
-`1` - Can be satisfied
-`0` - Cannot be satisfied
+- `1` - Can be satisfied
+- `0` - Cannot be satisfied
 
 #### semver_eq(semver_t a, semver_t b) => int
 
