@@ -25,7 +25,7 @@ typedef struct semver_version_s {
   char * prerelease;
 } semver_t;
 
-struct metadata_t {
+struct metadata_s {
   char * stage;
   int version[50];
   int version_count;
@@ -36,16 +36,13 @@ struct metadata_t {
  */
 
 int
-semver_satisfies (semver_t x, semver_t y);
-
-int
-semver_matches (const char * operator, semver_t x, semver_t y);
+semver_satisfies (semver_t x, semver_t y, const char * operator);
 
 int
 semver_compare (semver_t x, semver_t y);
 
 int
-semver_compare_meta (const char *x, const char *y);
+semver_compare_meta (struct metadata_s xm, struct metadata_s ym);
 
 int
 semver_gt (semver_t x, semver_t y);
@@ -80,5 +77,8 @@ semver_bump_minor (semver_t *x);
 void
 semver_bump_patch (semver_t *x);
 
+void
+semver_free (semver_t *x);
+
 int
-semver_valid_chars (const char *s);
+semver_is_valid (const char *s);

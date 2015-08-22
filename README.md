@@ -2,7 +2,7 @@
 
 [Semantic version](http://semver.org) v2.0 compliant parser and render written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
 
-**This is much a work in progress**
+Still beta. Do not use it in hostile environments.
 
 ## Features
 
@@ -11,15 +11,17 @@
 - [x] Version prerelease parsing
 - [x] Version comparison
 - [x] Comparison helpers
-- [ ] Comparison operators
-- [ ] Version render
-- [ ] Version bump
-- [ ] 100% coverage
+- [x] Comparison operators
+- [x] Version render
+- [x] Version bump
+- [x] 100% coverage
 - [x] No regex (actually ANSI C doesn't support it)
+- [ ] Range characters
 - [ ] Fuzz testing
 
 ## Usage
 
+Basic comparison:
 ```c
 #include <stdio.h>
 #include <semver.h>
@@ -27,8 +29,8 @@
 char current[] = "1.5.10";
 char compare[] = "2.3.0";
 
-semver_t current_version;
-semver_t compare_version;
+semver_t current_version = {};
+semver_t compare_version = {};
 
 if (semver_parse(str, &current_version)
   && semver_parse(str, &compare_version)) {
@@ -45,6 +47,26 @@ else if (resolution == -1) {
 }
 else {
   printf("Version %s is higher than: %s", compare, current)
+}
+```
+
+Satisfies version:
+
+```c
+#include <stdio.h>
+#include <semver.h>
+
+semver_t current = {};
+semver_t compare = {};
+
+semver_parse("1.3.10", &current);
+semver_parse("1.5.2", &compare);
+
+// Use caret operator for the comparison
+char operator[] = "^";
+
+if (semver_satisfies(current, compare, operator)) {
+  printf("Version %s can be satisfied by %s", "1.3.10", "1.5.2");
 }
 ```
 

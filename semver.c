@@ -42,7 +42,7 @@ strcut (char *str, int begin, int len) {
 }
 
 static int
-is_valid_chars (const char *s, const char *c) {
+has_valid_chars (const char *s, const char *c) {
   size_t clen = strlen(c);
   size_t slen = strlen(s);
 
@@ -66,7 +66,7 @@ is_valid_chars (const char *s, const char *c) {
 
 static int
 parse_int (const char *s) {
-  int invalid = is_valid_chars(s, NUMBERS);
+  int invalid = has_valid_chars(s, NUMBERS);
   if (invalid) return -1;
   int num = strtol(s, NULL, 10);
   if (num > MAX_SAFE_INT) return -1;
@@ -75,18 +75,16 @@ parse_int (const char *s) {
 
 static int
 semver_is_alpha (const char *s) {
-  return is_valid_chars(s, ALPHA) == 0 ? 1 : 0;
+  return has_valid_chars(s, ALPHA) == 0 ? 1 : 0;
 }
 
 static int
 semver_is_number (const char *s) {
-  return is_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
+  return has_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
 }
 
 static char *
-parse_slice (const char *str, char *buf, char sep) {
-  int len = strlen(str);
-
+parse_slice (char *buf, int len, const char *sep) {
   char * pr = strchr(buf, sep);
   if (pr == NULL) return pr;
   int plen = strlen(pr);
@@ -110,60 +108,49 @@ parse_slice (const char *str, char *buf, char sep) {
 
 int
 semver_parse (const char *str, semver_t *ver) {
-  char * buf[strlen(str)];
+  int len = strlen(str);
+  char * buf[len];
   strcpy(buf, str);
 
-  int valid = semver_is_valid(buf);
+  int valid = semver_is_valid(str);
   if (!valid) return -1;
 
-  ver->metadata = parse_slice(str, buf, MT_DELIMITER);
-  ver->prerelease = parse_slice(str, buf, PR_DELIMITER);
+  ver->metadata = parse_slice(buf, len, MT_DELIMITER[0]);
+  ver->prerelease = parse_slice(buf, len, PR_DELIMITER[0]);
 
   return semver_parse_version(buf, ver);
 }
 
 int
 semver_parse_version (const char *str, semver_t *ver) {
-  char major_s[SLICE_SIZE] = "0";
-  char minor_s[SLICE_SIZE] = "0";
-  char patch_s[SLICE_SIZE] = "0";
-
-  char * slice = strtok((char*)str, DELIMITER);
-
   int count = 0;
-  while (slice != NULL) {
+  char * slice = strtok(str, DELIMITER);
+
+  while (slice != NULL && count < 3) {
     count++;
 
     size_t len = strlen(slice);
     if (len > SLICE_SIZE) return -1;
 
+    // Cast to integer and store
+    int value = parse_int(slice);
+    if (value == -1) return value;
+
     switch (count) {
-      case 1: strcpy(major_s, slice); break;
-      case 2: strcpy(minor_s, slice); break;
-      case 3: strcpy(patch_s, slice); break;
+      case 1: ver->major = value; break;
+      case 2: ver->minor = value; break;
+      case 3: ver->patch = value; break;
     }
 
-    if (count == 3) break;
+    // Continue with the next slice
     slice = strtok(NULL, DELIMITER);
   }
-
-  int major = parse_int(major_s);
-  if (major == -1) return major;
-  ver->major = major;
-
-  int minor = parse_int(minor_s);
-  if (minor == -1) return minor;
-  ver->minor = minor;
-
-  int patch = parse_int(patch_s);
-  if (patch == -1) return patch;
-  ver->patch = patch;
 
   return 0;
 }
 
 int
-semver_parse_prerelease (const char *str, struct metadata_t *ver) {
+semver_parse_prerelease (const char *str, struct metadata_s *ver) {
   size_t len = strlen(str);
   if (len > SLICE_SIZE) return -1;
 
@@ -223,7 +210,7 @@ semver_compare (semver_t x, semver_t y) {
       && y.prerelease) return 1;
 
   if (x.prerelease && y.prerelease) {
-    int valid = semver_compare_meta(x.prerelease, y.prerelease);
+    int valid = semver_compare_init(x.prerelease, y.prerelease);
     if (valid) return valid;
   }
 
@@ -233,11 +220,38 @@ semver_compare (semver_t x, semver_t y) {
       && y.metadata) return 1;
 
   if (x.metadata && y.metadata) {
-    int valid = semver_compare_meta(x.metadata, y.metadata);
+    int valid = semver_compare_init(x.metadata, y.metadata);
     if (valid) return valid;
   }
 
   return 0;
+}
+
+int
+semver_compare_init (const char *x, const char *y) {
+  int error;
+  struct metadata_s xm = {};
+  struct metadata_s ym = {};
+
+  error = semver_parse_prerelease(x, &xm);
+  if (error) {
+     if (xm.stage) free((&xm)->stage);
+     return error;
+  }
+
+  error = semver_parse_prerelease(y, &ym);
+  if (error) {
+    if (ym.stage) free((&ym)->stage);
+    return error;
+  }
+
+  int resolution = semver_compare_meta(xm, ym);
+
+  // Free from heap
+  if (xm.stage) free((&xm)->stage);
+  if (ym.stage) free((&ym)->stage);
+
+  return resolution;
 }
 
 static int
@@ -267,14 +281,14 @@ semver_compare_version (semver_t x, semver_t y) {
   return 0;
 }
 
+static int
+cleanup (int code) {
+
+  return code;
+}
+
 int
-semver_compare_meta (const char *x, const char *y) {
-  struct metadata_t xm;
-  struct metadata_t ym;
-
-  semver_parse_prerelease(x, &xm);
-  semver_parse_prerelease(y, &ym);
-
+semver_compare_meta (struct metadata_s xm, struct metadata_s ym) {
   // Compare stage string by length
   if (xm.stage != NULL && ym.stage != NULL) {
     int xl = strlen(xm.stage);
@@ -286,11 +300,12 @@ semver_compare_meta (const char *x, const char *y) {
     if (xm.stage != NULL && ym.stage == NULL) return -1;
   }
 
-  // Compare version numbers
+  // Compare version numbers length
   if (xm.version_count != ym.version_count) {
     return xm.version_count < ym.version_count ? 1 : -1;
   }
 
+  // Compare each version slice
   for (int i = 0; i < xm.version_count; i++) {
     int xv = xm.version[i];
     int yv = ym.version[i];
@@ -337,18 +352,37 @@ semver_lte (semver_t x, semver_t y) {
   return resolution <= 0;
 }
 
-int
-semver_matches (const char * operator, semver_t x, semver_t y) {
-  int len = strlen(operator);
-  if (len == 0) return -1;
+/**
+ * Checks if both versions can be satisfied
+ * based on the given comparison operator.
+ *
+ * Allowed operators:
+ * - `=` - Equality
+ * - `>=` - Higher or equal to
+ * - `<=` - Lower or equal to
+ * - `<` - Lower than
+ * - `>` - Higher than
+ * - `^` - Caret comparison (see https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4)
+ - - `~` - Tilde comparison (see https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1)
+ *
+ * Returns:
+ * `1`  - Can be satisfied
+ * `0`  - Cannot be satisfied
+ */
 
+int
+semver_satisfies (semver_t x, semver_t y, const char * operator) {
+  int len = strlen(operator);
+  if (len == 0) return 0;
+
+  // Infer the comparison operator
   int op[2];
   len = len > 2 ? 2 : len;
   for (int i = 0; i < len; i++) {
     op[i] = (int) operator[i];
   }
 
-  // Match operator and perform the comparison
+  // Compare based on the specific operator
   if (op[0] == GT) {
     if (op[1] == EQ) {
       return semver_gte(x, y);
@@ -363,31 +397,39 @@ semver_matches (const char * operator, semver_t x, semver_t y) {
     return semver_lt(x, y);
   }
 
-  if (op[0] == EQ) {
-    return semver_eq(x, y);
-  }
+  // Strict equality
+  if (op[0] == EQ) return semver_eq(x, y);
 
-  if (op[0] == TF) {
-    return semver_gte(x, y);
-  }
-
+  // Caret operator
   if (op[0] == CF) {
-    return semver_gte(x, y) && x.minor == y.minor;
+    if (x.major == y.major) {
+      if (x.major == 0) {
+        return x.minor >= y.minor;
+      } else {
+        return 1;
+      }
+    }
+    return 0;
   }
 
-  return -1;
-}
+  // Tilde operator
+  if (op[0] == TF) {
+    return x.major == y.major && x.minor == y.minor;
+  }
 
-int
-semver_satisfies (semver_t x, semver_t y) {
   return 0;
 }
 
 void
 semver_free (semver_t *x) {
-  if (x->metadata) free(x->metadata);
-  if (x->prerelease) free(x->prerelease);
-  free(x);
+  if (x->metadata) {
+    free(x->metadata);
+    x->metadata = NULL;
+  }
+  if (x->prerelease) {
+    free(x->prerelease);
+    x->prerelease = NULL;
+  }
 }
 
 /**
@@ -396,7 +438,7 @@ semver_free (semver_t *x) {
 
 static void
 concat_num (char * str, int x, char * sep) {
-  char buf[MAX_SIZE];
+  char buf[SLICE_SIZE] = {};
   if (sep == NULL) sprintf(buf, "%d", x);
   else sprintf(buf, "%s%d", sep, x);
   strcat(str, buf);
@@ -404,13 +446,13 @@ concat_num (char * str, int x, char * sep) {
 
 static void
 concat_char (char * str, char * x, char * sep) {
-  char buf[MAX_SIZE];
+  char buf[SLICE_SIZE] = {};
   sprintf(buf, "%s%s", sep, x);
   strcat(str, buf);
 }
 
 void
-semver_render (semver_t *x, char * dest) {
+semver_render (semver_t *x, char *dest) {
   if (x->major) concat_num(dest, x->major, NULL);
   if (x->minor) concat_num(dest, x->minor, DELIMITER);
   if (x->patch) concat_num(dest, x->patch, DELIMITER);
@@ -445,5 +487,5 @@ int
 semver_is_valid (const char *s) {
   char tokens[] = NUMBERS ALPHA DELIMITERS;
   return strlen(s) <= MAX_SIZE
-    && is_valid_chars(s, tokens) == 0 ? 1 : 0;
+    && has_valid_chars(s, tokens) == 0 ? 1 : 0;
 }

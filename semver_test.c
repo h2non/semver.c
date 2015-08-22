@@ -23,18 +23,22 @@ struct test_case {
   int  expected;
 };
 
+struct test_case_match {
+  char * x;
+  char * y;
+  char * op;
+  int  expected;
+};
+
 typedef int (*fn)(semver_t, semver_t);
 
 static void
 compare_helper (char *a, char *b, int expected, fn test_fn) {
-  semver_t verX;
-  semver_t verY;
+  semver_t verX = {};
+  semver_t verY = {};
 
-  char * x = strdup(a);
-  char * y = strdup(b);
-
-  semver_parse(x, &verX);
-  semver_parse(y, &verY);
+  semver_parse(a, &verX);
+  semver_parse(b, &verY);
 
   int resolution = test_fn(verX, verY);
   assert(resolution == expected);
@@ -69,13 +73,13 @@ void
 test_parse_major() {
   test_start("parse_major");
 
-  char buf[] = "1";
-  semver_t ver;
+  char buf[] = "2";
+  semver_t ver = {};
 
   int error = semver_parse(buf, &ver);
 
   assert(error == 0);
-  assert(ver.major == 1);
+  assert(ver.major == 2);
   assert(ver.minor == 0);
   assert(ver.patch == 0);
 
@@ -87,7 +91,7 @@ test_parse_minor() {
   test_start("parse_minor");
 
   char buf[] = "1.2";
-  semver_t ver;
+  semver_t ver = {};
 
   int error = semver_parse(buf, &ver);
 
@@ -104,7 +108,7 @@ test_parse_prerelease() {
   test_start("parse_prerelease");
 
   char buf[] = "1.2.12-beta.alpha.1.1";
-  semver_t ver;
+  semver_t ver = {};
 
   int error = semver_parse(buf, &ver);
 
@@ -122,7 +126,7 @@ test_parse_metadata() {
   test_start("parse_metadata");
 
   char buf[] = "1.2.12+20130313144700";
-  semver_t ver;
+  semver_t ver = {};
 
   int error = semver_parse(buf, &ver);
 
@@ -140,7 +144,7 @@ test_parse_prerelerease_metadata() {
   test_start("parse_prerelease_metadata");
 
   char buf[] = "1.2.12-alpha.1+20130313144700";
-  semver_t ver;
+  semver_t ver = {};
 
   int error = semver_parse(buf, &ver);
 
@@ -343,22 +347,113 @@ test_compare_lte() {
   test_end();
 }
 
-
 void
-test_matches() {
-  test_start("semver_matches");
+test_satisfies() {
+  test_start("semver_satisfies");
 
-  semver_t x = {1, 2, 6};
-  semver_t y = {1, 6, 0};
+  struct test_case_match cases[] = {
+    {"1", "0", ">=", 1},
+    {"1", "3", ">=", 0},
+    {"1", "1", ">=", 1},
+    {"1.5", "0.8", ">=", 1},
+    {"1.2", "2.2", ">=", 0},
+    {"3.0", "1.5", ">=", 1},
+    {"1.0", "1.0", ">=", 1},
+    {"1.0.9", "1.0.0", ">=", 1},
+    {"1.1.5", "1.1.9", ">=", 0},
+    {"1.2.2", "1.2.9", ">=", 0},
+    {"1.0.0", "1.0.0", ">=", 1},
 
-  assert(semver_matches(">=", x, y) == 0);
-  assert(semver_matches("<=", x, y) == 1);
-  assert(semver_matches(">", x, y)  == 0);
-  assert(semver_matches("<", x, y)  == 1);
-  assert(semver_matches("=", x, y)  == 0);
-  // to do
-  assert(semver_matches("^", x, y)  == 0);
-  assert(semver_matches("~", x, y)  == 0);
+    {"1", "0", "<=", 0},
+    {"1", "3", "<=", 1},
+    {"1", "1", "<=", 1},
+    {"1.5", "0.8", "<=", 0},
+    {"1.2", "2.2", "<=", 1},
+    {"3.0", "1.5", "<=", 0},
+    {"1.0", "1.0", "<=", 1},
+    {"1.0.9", "1.0.0", "<=", 0},
+    {"1.1.5", "1.1.9", "<=", 1},
+    {"1.2.2", "1.2.9", "<=", 1},
+    {"1.0.0", "1.0.0", "<=", 1},
+
+    {"1", "0", "=", 0},
+    {"1", "3", "=", 0},
+    {"1", "1", "=", 1},
+    {"1.5", "0.8", "=", 0},
+    {"1.2", "2.2", "=", 0},
+    {"3.0", "1.5", "=", 0},
+    {"1.0", "1.0", "=", 1},
+    {"1.0.9", "1.0.0", "=", 0},
+    {"1.1.5", "1.1.9", "=", 0},
+    {"1.2.2", "1.2.9", "=", 0},
+    {"1.0.0", "1.0.0", "=", 1},
+
+    {"1", "0", ">", 1},
+    {"1", "3", ">", 0},
+    {"1", "1", ">", 0},
+    {"1.5", "0.8", ">", 1},
+    {"1.2", "2.2", ">", 0},
+    {"3.0", "1.5", ">", 1},
+    {"1.0", "1.0", ">", 0},
+    {"1.0.9", "1.0.0", ">", 1},
+    {"1.1.5", "1.1.9", ">", 0},
+    {"1.2.2", "1.2.9", ">", 0},
+    {"1.0.0", "1.0.0", ">", 0},
+
+    {"1", "0", "<", 0},
+    {"1", "3", "<", 1},
+    {"1", "1", "<", 0},
+    {"1.5", "0.8", "<", 0},
+    {"1.2", "2.2", "<", 1},
+    {"3.0", "1.5", "<", 0},
+    {"1.0", "1.0", "<", 0},
+    {"1.0.9", "1.0.0", "<", 0},
+    {"1.1.5", "1.1.9", "<", 1},
+    {"1.2.2", "1.2.9", "<", 1},
+    {"1.0.0", "1.0.0", "<", 0},
+
+    {"1", "0", "^", 0},
+    {"1", "3", "^", 0},
+    {"1", "1", "^", 1},
+    {"1.5", "0.8", "^", 0},
+    {"1.2", "2.2", "^", 0},
+    {"3.0", "1.5", "^", 0},
+    {"1.0", "1.0", "^", 1},
+    {"1.0.9", "1.0.0", "^", 1},
+    {"1.1.5", "1.1.9", "^", 1},
+    {"1.3.2", "1.1.9", "^", 1},
+    {"1.1.2", "1.5.9", "^", 1},
+    {"0.1.2", "1.5.9", "^", 0},
+    {"0.1.2", "0.2.9", "^", 0},
+    {"1.2.2", "1.2.9", "^", 1},
+    {"1.0.0", "1.0.0", "^", 1},
+
+    {"1", "0", "~", 0},
+    {"1", "3", "~", 0},
+    {"1", "1", "~", 1},
+    {"1.5", "0.8", "~", 0},
+    {"1.2", "2.2", "~", 0},
+    {"3.0", "1.5", "~", 0},
+    {"1.0", "1.0", "~", 1},
+    {"1.0.9", "1.0.0", "~", 1},
+    {"1.1.5", "1.1.9", "~", 1},
+    {"1.1.9", "1.1.3", "~", 1},
+    {"1.2.2", "1.3.9", "~", 0},
+    {"1.0.0", "1.0.0", "~", 1},
+  };
+
+  for (int i = 0; i < 82; i++) {
+    struct test_case_match args = cases[i];
+
+    semver_t verX = {};
+    semver_t verY = {};
+
+    semver_parse(args.x, &verX);
+    semver_parse(args.y, &verY);
+
+    int resolution = semver_satisfies(verX, verY, args.op);
+    assert(resolution == args.expected);
+  }
 
   test_end();
 }
@@ -372,14 +467,14 @@ test_render() {
   test_start("render");
 
   semver_t ver = {1, 5, 8};
-  char * str[5];
+  char * str[10] = {};
   semver_render(&ver, str);
   assert(strcmp(str, "1.5.8") == 0);
 
   semver_t ver2 = {1, 5, 8};
   ver2.prerelease = "alpha.1";
   ver2.metadata = "1232323";
-  char * str2[100];
+  char * str2[22] = {};
   semver_render(&ver2, str2);
   assert(strcmp(str2, "1.5.8-alpha.1+1232323") == 0);
 
@@ -436,6 +531,31 @@ test_bump_patch() {
 }
 
 /**
+ * Clean up
+ */
+
+void
+test_free () {
+  test_start("free");
+
+  semver_t ver = {};
+  char * str = "1.5.6";
+  semver_parse(str, &ver);
+  assert(ver.major == 1);
+  assert(ver.patch == 6);
+  semver_free(&ver);
+
+  semver_t ver2 = {};
+  char * str2 = "1.5.6-beta.1+12345";
+  semver_parse(str2, &ver2);
+  assert(ver2.prerelease != NULL);
+  semver_free(&ver2);
+  assert(ver2.prerelease == NULL);
+
+  test_end();
+}
+
+/**
  * Helper functions
  */
 
@@ -455,6 +575,9 @@ test_valid_chars() {
   assert(error == 1);
 
   error = semver_is_valid("3 0 1");
+  assert(error == 0);
+
+  error = semver_is_valid("&3@(");
   assert(error == 0);
 
   test_end();
@@ -480,13 +603,16 @@ main() {
   test_compare_neq();
   test_compare_gte();
   test_compare_lte();
-  test_matches();
+  test_satisfies();
 
   // Render
   test_render();
   test_bump();
   test_bump_minor();
   test_bump_patch();
+
+  // Clean up
+  test_free();
 
   // Private helpers
   test_valid_chars();
