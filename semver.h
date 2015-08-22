@@ -5,12 +5,16 @@
 // MIT licensed
 //
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __SEMVER_H
 #define __SEMVER_H
 #endif
 
-#ifdef __cplusplus
-extern "C" {
+#ifndef SEMVER_VERSION
+#define SEMVER_VERSION "0.1.0"
 #endif
 
 /**
@@ -36,7 +40,7 @@ struct metadata_s {
  */
 
 int
-semver_satisfies (semver_t x, semver_t y, const char * operator);
+semver_satisfies (semver_t x, semver_t y, const char *operator);
 
 int
 semver_compare (semver_t x, semver_t y);

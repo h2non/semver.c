@@ -1,6 +1,6 @@
 # semver.c [![Build Status](https://travis-ci.org/h2non/semver.c.png)](https://travis-ci.org/h2non/semver.c) [![GitHub release](https://img.shields.io/github/tag/h2non/semver.c.svg)](https://github.com/h2non/semver.c/releases)
 
-[Semantic version](http://semver.org) v2.0 compliant parser and render written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
+[Semantic version](http://semver.org) v2.0 parser and render written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
 
 Still beta. Do not use it in hostile environments.
 
@@ -48,6 +48,10 @@ else if (resolution == -1) {
 else {
   printf("Version %s is higher than: %s", compare, current)
 }
+
+// Free allocated memory when we're done
+semver_free(&current);
+semver_free(&compare);
 ```
 
 Satisfies version:
@@ -68,6 +72,10 @@ char operator[] = "^";
 if (semver_satisfies(current, compare, operator)) {
   printf("Version %s can be satisfied by %s", "1.3.10", "1.5.2");
 }
+
+// Free allocated memory when we're done
+semver_free(&current);
+semver_free(&compare);
 ```
 
 ## Installation
@@ -104,48 +112,68 @@ Returns:
 - `0` in case of equal versions.
 - `1` in case of higher version.
 
-#### semver_satisfies(semver_t a, semver_t b) => int
+#### semver_satisfies(semver_t a, semver_t b, char *operator) => int
 
 Checks if both versions can be satisfied
 based on the given comparison operator.
 
 **Allowed operators**:
 
-- `=` - Equality
+- `=`  - Equality
 - `>=` - Higher or equal to
 - `<=` - Lower or equal to
-- `<` - Lower than
-- `>` - Higher than
-- `^` - Caret operator comparison ([more info](https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4))
- - - `~` - Tilde operator comparison ([more info](https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1))
+- `<`  - Lower than
+- `>`  - Higher than
+- `^`  - Caret operator comparison ([more info](https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4))
+- `~`  - Tilde operator comparison ([more info](https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1))
 
 **Returns**:
-`1`  - Can be satisfied
-`0`  - Cannot be satisfied
+`1` - Can be satisfied
+`0` - Cannot be satisfied
 
-#### int semver_eq(semver_t a, semver_t b)
+#### semver_eq(semver_t a, semver_t b) => int
 
 Equality comparison.
 
-#### int semver_ne(semver_t a, semver_t b)
+#### semver_ne(semver_t a, semver_t b) => int
 
 Non equal comparison.
 
-#### int semver_gt(semver_t a, semver_t b)
+#### semver_gt(semver_t a, semver_t b) => int
 
 Greater than comparison.
 
-#### int semver_lt(semver_t a, semver_t b)
+#### semver_lt(semver_t a, semver_t b) => int
 
 Lower than comparison.
 
-#### int semver_gte(semver_t a, semver_t b)
+#### semver_gte(semver_t a, semver_t b) => int
 
 Greater than or equal comparison.
 
-#### int semver_lte(semver_t a, semver_t b)
+#### semver_lte(semver_t a, semver_t b) => int
 
 Lower than or equal comparison.
+
+#### semver_bump(semver_t *a) => void
+
+Bump major version.
+
+#### semver_bump_minor(semver_t *a) => void
+
+Bump minor version.
+
+#### semver_bump_patch(semver_t *a) => void
+
+Bump patch version.
+
+#### semver_free(semver_t *a) => void
+
+Helper to free allocated memory from heap.
+
+#### semver_is_valid(char *str) => int
+
+Checks if the given string is a valid semver expression.
 
 ## License
 

@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "semver.h"
-#include "version.h"
 
 #define NUMBERS      "0123456789"
 #define ALPHA        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
