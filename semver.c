@@ -385,6 +385,7 @@ semver_satisfies (semver_t x, semver_t y, const char * operator) {
     if (op[1] == SYMBOL_EQ) {
       return semver_gte(x, y);
     }
+    printf("GREATER THAN: %d\n", op[0]);
     return semver_gt(x, y);
   }
 
