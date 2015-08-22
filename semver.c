@@ -83,8 +83,8 @@ semver_is_number (const char *s) {
   return is_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
 }
 
-char *
-semver_parse_slice (const char *str, char *buf, char sep) {
+static char *
+parse_slice (const char *str, char *buf, char sep) {
   int len = strlen(str);
 
   char * pr = strchr(buf, sep);
@@ -116,8 +116,8 @@ semver_parse (const char *str, semver_t *ver) {
   int valid = semver_is_valid(buf);
   if (!valid) return -1;
 
-  ver->metadata = semver_parse_slice(str, buf, '+');
-  ver->prerelease = semver_parse_slice(str, buf, '-');
+  ver->metadata = parse_slice(str, buf, MT_DELIMITER);
+  ver->prerelease = parse_slice(str, buf, PR_DELIMITER);
 
   return semver_parse_version(buf, ver);
 }
