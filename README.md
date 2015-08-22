@@ -128,6 +128,7 @@ based on the given comparison operator.
 - `~`  - Tilde operator comparison ([more info](https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1))
 
 **Returns**:
+
 `1` - Can be satisfied
 `0` - Cannot be satisfied
 
