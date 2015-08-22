@@ -43,12 +43,12 @@ strcut (char *str, int begin, int len) {
 
 static int
 has_valid_chars (const char *s, const char *c) {
-  size_t clen = strlen(c);
-  size_t slen = strlen(s);
+  size_t unsigned clen = strlen(c);
+  size_t unsigned slen = strlen(s);
 
   for (int i = 0; i < slen; i++) {
     char v = s[i];
-    int match = -1;
+    unsigned match = -1;
 
     for (int x = 0; x < clen; x++) {
       char y = c[x];
