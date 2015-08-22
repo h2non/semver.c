@@ -43,14 +43,14 @@ strcut (char *str, int begin, int len) {
 
 static int
 has_valid_chars (const char *s, const char *c) {
-  size_t unsigned clen = strlen(c);
-  size_t unsigned slen = strlen(s);
+  size_t clen = strlen(c);
+  size_t slen = strlen(s);
 
-  for (int i = 0; i < slen; i++) {
+  for (unsigned int i = 0; i < slen; i++) {
     char v = s[i];
     unsigned match = -1;
 
-    for (int x = 0; x < clen; x++) {
+    for (unsigned int x = 0; x < clen; x++) {
       char y = c[x];
       if (y == v) {
         match = 0;
@@ -58,16 +58,16 @@ has_valid_chars (const char *s, const char *c) {
       }
     }
 
-    if (match) return -1;
+    if (match) return 0;
   }
 
-  return 0;
+  return 1;
 }
 
 static int
 parse_int (const char *s) {
-  int invalid = has_valid_chars(s, NUMBERS);
-  if (invalid) return -1;
+  int valid = has_valid_chars(s, NUMBERS);
+  if (valid == 0) return -1;
   int num = strtol(s, NULL, 10);
   if (num > MAX_SAFE_INT) return -1;
   return num;
@@ -75,12 +75,12 @@ parse_int (const char *s) {
 
 static int
 semver_is_alpha (const char *s) {
-  return has_valid_chars(s, ALPHA) == 0 ? 1 : 0;
+  return has_valid_chars(s, ALPHA);
 }
 
 static int
 semver_is_number (const char *s) {
-  return has_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
+  return has_valid_chars(s, NUMBERS);
 }
 
 static char *
@@ -258,6 +258,7 @@ semver_compare (semver_t x, semver_t y) {
 
 static int
 compare_versions (int x, int y) {
+  printf("Compare version: %d == %d => %d\n", x, y, x > y);
   if (x == y) return 0;
   if (x > y) return 1;
   return -1;
@@ -268,6 +269,7 @@ semver_compare_version (semver_t x, semver_t y) {
   int match;
 
   match = compare_versions(x.major, y.major);
+  printf(">> Result comparison: %d\n\n", match);
   if (match) return match;
 
   match = compare_versions(x.minor, y.minor);
@@ -481,5 +483,5 @@ int
 semver_is_valid (const char *s) {
   char tokens[] = NUMBERS ALPHA DELIMITERS;
   return strlen(s) <= MAX_SIZE
-    && has_valid_chars(s, tokens) == 0 ? 1 : 0;
+    && has_valid_chars(s, tokens);
 }
