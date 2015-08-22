@@ -27,7 +27,6 @@ typedef struct semver_version_s {
 
 struct metadata_t {
   char * stage;
-  char * prerelease;
   int pr_version[50];
   int pr_version_count;
 };

@@ -132,59 +132,34 @@ semver_parse_prerelease (const char *str, struct metadata_t *ver) {
   size_t len = strlen(str);
   if (len > SLICE_SIZE) return -1;
 
-  char * buf[len];
-  strcpy(buf, str);
-
-  char * slice = strtok(buf, DELIMITER);
+  char * slice = strtok(str, DELIMITER);
 
   int count = 0;
-  int vcount = 0;
+  ver->pr_version_count = 0;
 
   while (slice != NULL) {
-    count++;
-
-    if (count > SLICE_SIZE) return -1;
-
-    if (semver_is_alpha(slice)) {
-      if (count > 1 && ver->stage != NULL) {
-        char *buf = malloc( sizeof(ver->stage) + sizeof(slice) );
-        strcpy(buf, ver->stage);
-        strcat(str, slice);
-        ver->stage = buf;
-
-        slice = strtok(NULL, DELIMITER);
-        continue;
-      }
-
-      char *buf = malloc(sizeof(slice));
-      strcpy(buf, slice);
-      ver->stage = buf;
-      slice = strtok(NULL, DELIMITER);
-      continue;
-    }
+    if (count++ > SLICE_SIZE) return -1;
 
     if (semver_is_number(slice)) {
       int num = semver_parse_int(slice);
       if (num == -1) return num;
-      ver->pr_version[vcount] = num;
+      ver->pr_version[ver->pr_version_count++] = num;
+      slice = strtok(NULL, DELIMITER);
+      continue;
     }
 
-    if (semver_is_alpha(slice)) {
-      for (int i = 0; i < len; i++) {
-        char v = slice[i];
-        ver->pr_version[vcount] = (int)v;
-      }
+    if (count > 1 && ver->stage != NULL) {
+      realloc(ver->stage, sizeof(slice) + 1);
+      strcat(ver->stage, DELIMITER);
+      strcat(ver->stage, slice);
+    } else {
+      char * buf = malloc(sizeof(slice));
+      strcpy(buf, slice);
+      ver->stage = buf;
     }
 
-    vcount++;
     slice = strtok(NULL, DELIMITER);
   }
-
-  char *prerelease = malloc(sizeof(str));
-  strcpy(prerelease, str);
-  ver->prerelease = prerelease;
-
-  ver->pr_version_count = vcount;
 
   return 0;
 }
@@ -204,39 +179,25 @@ semver_compare (semver_t x, semver_t y) {
   if (matches) return matches;
 
   if (x.metadata == NULL
-      && x.prerelease != NULL
-      && y.prerelease == NULL) return -1;
+      && y.prerelease == NULL
+      && x.prerelease) return -1;
   if (x.metadata == NULL
       && x.prerelease == NULL
-      && y.prerelease != NULL) return 1;
+      && y.prerelease) return 1;
 
-  if (x.prerelease != NULL && y.prerelease != NULL) {
-    struct metadata_t xm;
-    struct metadata_t ym;
-    semver_parse_prerelease(x.prerelease, &xm);
-    semver_parse_prerelease(y.prerelease, &ym);
-
-    if (xm.stage != NULL && ym.stage != NULL) {
-      int xl = strlen(xm.stage);
-      int yl = strlen(ym.stage);
-      if (xl > yl) return -1;
-      if (xl < yl) return 1;
-    } else {
-      if (xm.stage == NULL && ym.stage != NULL) return 1;
-      if (xm.stage != NULL && ym.stage == NULL) return -1;
-    }
-
-    for (int i = 0; i < xm.pr_version_count; i++) {
-      if (ym.pr_version_count < i) return 1;
-      int xv = xm.pr_version[i];
-      int yv = ym.pr_version[i];
-      if (xv > yv) return 1;
-      if (xv < yv) return -1;
-    }
+  if (x.prerelease && y.prerelease) {
+    int valid = semver_compare_meta(x.prerelease, y.prerelease);
+    if (valid) return valid;
   }
 
-  if (x.metadata != NULL) {
-    // To do: metadata comparison
+  if (y.metadata == NULL
+      && x.metadata) return -1;
+  if (x.metadata == NULL
+      && y.metadata) return 1;
+
+  if (x.metadata && y.metadata) {
+    int valid = semver_compare_meta(x.metadata, y.metadata);
+    if (valid) return valid;
   }
 
   return 0;
@@ -265,6 +226,38 @@ semver_compare_version (semver_t x, semver_t y) {
 
   match = compare_versions(x.patch, y.patch);
   if (match) return match;
+
+  return 0;
+}
+
+int
+semver_compare_meta (const char *x, const char *y) {
+  struct metadata_t xm;
+  struct metadata_t ym;
+
+  semver_parse_prerelease(x, &xm);
+  semver_parse_prerelease(y, &ym);
+
+  if (xm.stage != NULL && ym.stage != NULL) {
+    int xl = strlen(xm.stage);
+    int yl = strlen(ym.stage);
+    if (xl > yl) return -1;
+    if (xl < yl) return 1;
+  } else {
+    if (xm.stage == NULL && ym.stage != NULL) return 1;
+    if (xm.stage != NULL && ym.stage == NULL) return -1;
+  }
+
+  if (xm.pr_version_count != ym.pr_version_count) {
+    return xm.pr_version_count < ym.pr_version_count ? 1 : -1;
+  }
+
+  for (int i = 0; i < xm.pr_version_count; i++) {
+    int xv = xm.pr_version[i];
+    int yv = ym.pr_version[i];
+    if (xv > yv) return 1;
+    if (xv < yv) return -1;
+  }
 
   return 0;
 }
@@ -412,7 +405,8 @@ semver_is_number (const char *s) {
 int
 semver_is_valid (const char *s) {
   char tokens[] = NUMBERS ALPHA ".-+";
-  return semver_valid_chars(s, tokens) == 0 ? 1 : 0;
+  return semver_valid_chars(s, tokens) == 0
+    && strlen(s) <= MAX_SIZE ? 1 : 0;
 }
 
 int

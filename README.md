@@ -11,8 +11,8 @@
 - [x] Version prerelease parsing
 - [x] Version comparison
 - [x] Comparison helpers
-- [-] Comparison operators
-- [-] Version render
+- [ ] Comparison operators
+- [ ] Version render
 - [ ] Version bump
 - [ ] 100% coverage
 - [x] No regex (actually ANSI C doesn't support it)

@@ -195,9 +195,16 @@ test_compare_full() {
     {"1.5.1-beta.1.0", "1.5.1-alpha.1.0", 1},
     {"1.5.1-beta.1.100", "1.5.1-alpha.1.99", 1},
     {"1.5.1-beta.1.123456789", "1.5.1-alpha.1.12345678", 1},
+    {"1.5.1-beta.alpha.1", "1.5.1-beta.alpha.1.12345678", 1},
+    {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+20120313144700", 1},
+    {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+20130313144700", 0},
+    {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+exp.sha.5114f85", 1},
+    {"1.5.1-beta.1+exp.sha.5114f85", "1.5.1-beta.1+exp.sha.5114f84", 0},
+    {"1.5.1-beta.1+exp.sha.5114f85", "1.5.1-beta.1+exp.sha1.5114f84", 1},
+    {"1.5.1-beta.1+exp.sha", "1.5.1-beta.1+exp.sha256", 1},
   };
 
-  suite_runner(cases, 12, &semver_compare);
+  suite_runner(cases, 19, &semver_compare);
   test_end();
 }
 
