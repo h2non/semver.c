@@ -376,8 +376,8 @@ semver_satisfies (semver_t x, semver_t y, const char *operator) {
   }
 
   // Compare based on the specific operator
-  if (op[0] == (int) SYMBOL_GT) {
-    if (op[1] == (int) SYMBOL_EQ) {
+  if (op[0] == SYMBOL_GT) {
+    if (op[1] == SYMBOL_EQ) {
       return semver_gte(x, y);
     }
     return semver_gt(x, y);
