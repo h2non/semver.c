@@ -369,7 +369,8 @@ semver_lte (semver_t x, semver_t y) {
  */
 
 int
-semver_satisfies (semver_t x, semver_t y, const char * operator) {
+semver_satisfies (semver_t x, semver_t y, const char *operator) {
+  printf("Load operator: %s\n", operator);
   int len = strlen(operator);
   if (len == 0) return 0;
 
@@ -383,7 +384,7 @@ semver_satisfies (semver_t x, semver_t y, const char * operator) {
   // Compare based on the specific operator
   if (op[0] == (int) SYMBOL_GT) {
     printf("\n>>> Operator: %c == %c => %d\n", op[0], SYMBOL_GT, op[0] == (int) SYMBOL_GT);
-    printf(">>> Operator: %c == %c => %d\n\n", op[1], SYMBOL_EQ, op[1] == (int) SYMBOL_GT);
+    printf(">>> Operator: %c == %c => %d\n\n", op[1], SYMBOL_EQ, op[1] == (int) SYMBOL_EQ);
     if (op[1] == (int) SYMBOL_EQ) {
       return semver_gte(x, y);
     }
