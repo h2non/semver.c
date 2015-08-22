@@ -47,7 +47,7 @@ has_valid_chars (const char *s, const char *c) {
 
   for (unsigned int i = 0; i < slen; i++) {
     char v = s[i];
-    unsigned match = -1;
+    int match = -1;
 
     for (unsigned int x = 0; x < clen; x++) {
       char y = c[x];
@@ -454,7 +454,7 @@ semver_render (semver_t *x, char *dest) {
 }
 
 /**
- * Bump
+ * Bump helpers
  */
 
 void
@@ -479,6 +479,5 @@ semver_bump_patch (semver_t *x) {
 int
 semver_is_valid (const char *s) {
   char tokens[] = NUMBERS ALPHA DELIMITERS;
-  return strlen(s) <= MAX_SIZE
-    && has_valid_chars(s, tokens);
+  return strlen(s) <= MAX_SIZE && has_valid_chars(s, tokens);
 }
