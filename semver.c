@@ -313,6 +313,7 @@ semver_compare_meta (struct metadata_s xm, struct metadata_s ym) {
 
 int
 semver_gt (semver_t x, semver_t y) {
+  printf("Greather than: %d > %d\n", x, y);
   int resolution = semver_compare(x, y);
   return resolution == 1 ? 1 : 0;
 }
