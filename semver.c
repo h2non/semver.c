@@ -380,12 +380,13 @@ semver_satisfies (semver_t x, semver_t y, const char * operator) {
     op[i] = (int) operator[i];
   }
 
+  printf("\n>>> Operator: %c == %c => %d\n\n", op[0], SYMBOL_GT, op[0] == (int) SYMBOL_GT);
+
   // Compare based on the specific operator
-  if (op[0] == SYMBOL_GT) {
+  if (op[0] == (int) SYMBOL_GT) {
     if (op[1] == SYMBOL_EQ) {
       return semver_gte(x, y);
     }
-    printf("GREATER THAN: %d\n", op[0]);
     return semver_gt(x, y);
   }
 
