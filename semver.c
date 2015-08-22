@@ -258,7 +258,6 @@ semver_compare (semver_t x, semver_t y) {
 
 static int
 compare_versions (int x, int y) {
-  printf("Compare version: %d == %d => %d\n", x, y, x > y);
   if (x == y) return 0;
   if (x > y) return 1;
   return -1;
@@ -269,11 +268,9 @@ semver_compare_version (semver_t x, semver_t y) {
   int match;
 
   match = compare_versions(x.major, y.major);
-  printf(">> Result comparison major: %d\n\n", match);
   if (match) return match;
 
   match = compare_versions(x.minor, y.minor);
-  printf(">> Result comparison minor: %d\n\n", match);
   if (match) return match;
 
   match = compare_versions(x.patch, y.patch);
@@ -313,7 +310,6 @@ semver_compare_meta (struct metadata_s xm, struct metadata_s ym) {
 
 int
 semver_gt (semver_t x, semver_t y) {
-  printf("Greather than: %d > %d\n", x, y);
   int resolution = semver_compare(x, y);
   return resolution == 1 ? 1 : 0;
 }
@@ -383,7 +379,7 @@ semver_satisfies (semver_t x, semver_t y, const char *operator) {
 
   // Compare based on the specific operator
   if (op[0] == (int) SYMBOL_GT) {
-    printf("\n>>> Operator: %c == %c => %d\n", op[0], SYMBOL_GT, op[0] == (int) SYMBOL_GT);
+    //printf("\n>>> Operator: %c == %c => %d\n", op[0], SYMBOL_GT, op[0] == (int) SYMBOL_GT);
     printf(">>> Operator: %c == %c => %d\n\n", op[1], SYMBOL_EQ, op[1] == (int) SYMBOL_EQ);
     if (op[1] == (int) SYMBOL_EQ) {
       return semver_gte(x, y);
