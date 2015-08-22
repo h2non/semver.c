@@ -11,12 +11,14 @@
 #include "semver.h"
 #include "version.h"
 
-#define NUMBERS    "0123456789"
-#define ALPHA      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define TOKENS     ".-+"
-#define DELIMITER  "."
-#define MAX_SIZE   sizeof(char) * 255
-#define SLICE_SIZE 50
+#define NUMBERS      "0123456789"
+#define ALPHA        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define DELIMITER    "."
+#define PR_DELIMITER "-"
+#define MT_DELIMITER "+"
+#define DELIMITERS   DELIMITER PR_DELIMITER MT_DELIMITER
+#define MAX_SIZE     sizeof(char) * 255
+#define SLICE_SIZE   50
 
 const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
@@ -28,15 +30,6 @@ static enum operators {
   CF  = 0x5e
 };
 
-static char *
-substr (const char *input, int offset, int len, char *dest) {
-  int input_len = strlen(input);
-  if (offset + len > input_len) return NULL;
-
-  strncpy(dest, input + offset, len);
-  return dest;
-}
-
 static int
 strcut (char *str, int begin, int len) {
   int l = strlen(str);
@@ -46,6 +39,48 @@ strcut (char *str, int begin, int len) {
   memmove(str + begin, str + begin + len, l - len + 1);
 
   return len;
+}
+
+static int
+is_valid_chars (const char *s, const char *c) {
+  size_t clen = strlen(c);
+  size_t slen = strlen(s);
+
+  for (int i = 0; i < slen; i++) {
+    char v = s[i];
+    int match = -1;
+
+    for (int x = 0; x < clen; x++) {
+      char y = c[x];
+      if (y == v) {
+        match = 0;
+        break;
+      }
+    }
+
+    if (match) return -1;
+  }
+
+  return 0;
+}
+
+static int
+parse_int (const char *s) {
+  int invalid = is_valid_chars(s, NUMBERS);
+  if (invalid) return -1;
+  int num = strtol(s, NULL, 10);
+  if (num > MAX_SAFE_INT) return -1;
+  return num;
+}
+
+static int
+semver_is_alpha (const char *s) {
+  return is_valid_chars(s, ALPHA) == 0 ? 1 : 0;
+}
+
+static int
+semver_is_number (const char *s) {
+  return is_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
 }
 
 char *
@@ -112,15 +147,15 @@ semver_parse_version (const char *str, semver_t *ver) {
     slice = strtok(NULL, DELIMITER);
   }
 
-  int major = semver_parse_int(major_s);
+  int major = parse_int(major_s);
   if (major == -1) return major;
   ver->major = major;
 
-  int minor = semver_parse_int(minor_s);
+  int minor = parse_int(minor_s);
   if (minor == -1) return minor;
   ver->minor = minor;
 
-  int patch = semver_parse_int(patch_s);
+  int patch = parse_int(patch_s);
   if (patch == -1) return patch;
   ver->patch = patch;
 
@@ -135,19 +170,21 @@ semver_parse_prerelease (const char *str, struct metadata_t *ver) {
   char * slice = strtok(str, DELIMITER);
 
   int count = 0;
-  ver->pr_version_count = 0;
+  ver->version_count = 0;
 
   while (slice != NULL) {
     if (count++ > SLICE_SIZE) return -1;
 
+    // If number, cast it and store in the version buffer
     if (semver_is_number(slice)) {
-      int num = semver_parse_int(slice);
+      int num = parse_int(slice);
       if (num == -1) return num;
-      ver->pr_version[ver->pr_version_count++] = num;
+      ver->version[ver->version_count++] = num;
       slice = strtok(NULL, DELIMITER);
       continue;
     }
 
+    // If alpha, store in the buffer
     if (count > 1 && ver->stage != NULL) {
       realloc(ver->stage, sizeof(slice) + 1);
       strcat(ver->stage, DELIMITER);
@@ -238,6 +275,7 @@ semver_compare_meta (const char *x, const char *y) {
   semver_parse_prerelease(x, &xm);
   semver_parse_prerelease(y, &ym);
 
+  // Compare stage string by length
   if (xm.stage != NULL && ym.stage != NULL) {
     int xl = strlen(xm.stage);
     int yl = strlen(ym.stage);
@@ -248,13 +286,14 @@ semver_compare_meta (const char *x, const char *y) {
     if (xm.stage != NULL && ym.stage == NULL) return -1;
   }
 
-  if (xm.pr_version_count != ym.pr_version_count) {
-    return xm.pr_version_count < ym.pr_version_count ? 1 : -1;
+  // Compare version numbers
+  if (xm.version_count != ym.version_count) {
+    return xm.version_count < ym.version_count ? 1 : -1;
   }
 
-  for (int i = 0; i < xm.pr_version_count; i++) {
-    int xv = xm.pr_version[i];
-    int yv = ym.pr_version[i];
+  for (int i = 0; i < xm.version_count; i++) {
+    int xv = xm.version[i];
+    int yv = ym.version[i];
     if (xv > yv) return 1;
     if (xv < yv) return -1;
   }
@@ -299,7 +338,7 @@ semver_lte (semver_t x, semver_t y) {
 }
 
 int
-semver_match (const char * operator, semver_t x, semver_t y) {
+semver_matches (const char * operator, semver_t x, semver_t y) {
   int len = strlen(operator);
   if (len == 0) return -1;
 
@@ -333,16 +372,21 @@ semver_match (const char * operator, semver_t x, semver_t y) {
   }
 
   if (op[0] == CF) {
-    return semver_gte(x, y);
+    return semver_gte(x, y) && x.minor == y.minor;
   }
 
   return -1;
 }
 
+int
+semver_satisfies (semver_t x, semver_t y) {
+  return 0;
+}
+
 void
 semver_free (semver_t *x) {
-  free(x->metadata);
-  free(x->prerelease);
+  if (x->metadata) free(x->metadata);
+  if (x->prerelease) free(x->prerelease);
   free(x);
 }
 
@@ -365,18 +409,32 @@ concat_char (char * str, char * x, char * sep) {
   strcat(str, buf);
 }
 
-int
+void
 semver_render (semver_t *x, char * dest) {
-  char * buf[MAX_SIZE];
+  if (x->major) concat_num(dest, x->major, NULL);
+  if (x->minor) concat_num(dest, x->minor, DELIMITER);
+  if (x->patch) concat_num(dest, x->patch, DELIMITER);
+  if (x->prerelease) concat_char(dest, x->prerelease, PR_DELIMITER);
+  if (x->metadata) concat_char(dest, x->metadata, MT_DELIMITER);
+}
 
-  if (x->major) concat_num(buf, x->major, NULL);
-  if (x->minor) concat_num(buf, x->minor, ".");
-  if (x->patch) concat_num(buf, x->patch, ".");
-  if (x->prerelease) concat_char(buf, x->prerelease, "-");
-  if (x->metadata) concat_char(buf, x->metadata, "+");
+/**
+ * Bump
+ */
 
-  strcpy(dest, buf);
-  return 0;
+void
+semver_bump (semver_t *x) {
+  x->major++;
+}
+
+void
+semver_bump_minor (semver_t *x) {
+  x->minor++;
+}
+
+void
+semver_bump_patch (semver_t *x) {
+  x->patch++;
 }
 
 /**
@@ -384,50 +442,8 @@ semver_render (semver_t *x, char * dest) {
  */
 
 int
-semver_parse_int (const char *s) {
-  int invalid = semver_valid_chars(s, NUMBERS);
-  if (invalid) return -1;
-  int num = strtol(s, NULL, 10);
-  if (num > MAX_SAFE_INT) return -1;
-  return num;
-}
-
-int
-semver_is_alpha (const char *s) {
-  return semver_valid_chars(s, ALPHA) == 0 ? 1 : 0;
-}
-
-int
-semver_is_number (const char *s) {
-  return semver_valid_chars(s, NUMBERS) == 0 ? 1 : 0;
-}
-
-int
 semver_is_valid (const char *s) {
-  char tokens[] = NUMBERS ALPHA ".-+";
-  return semver_valid_chars(s, tokens) == 0
-    && strlen(s) <= MAX_SIZE ? 1 : 0;
-}
-
-int
-semver_valid_chars (const char *s, const char *c) {
-  size_t clen = strlen(c);
-  size_t slen = strlen(s);
-
-  for (int i = 0; i < slen; i++) {
-    char v = s[i];
-    int match = -1;
-
-    for (int x = 0; x < clen; x++) {
-      char y = c[x];
-      if (y == v) {
-        match = 0;
-        break;
-      }
-    }
-
-    if (match) return -1;
-  }
-
-  return 0;
+  char tokens[] = NUMBERS ALPHA DELIMITERS;
+  return strlen(s) <= MAX_SIZE
+    && is_valid_chars(s, tokens) == 0 ? 1 : 0;
 }

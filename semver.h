@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 /**
- * version struct
+ * semver_t struct
  */
 
 typedef struct semver_version_s {
@@ -27,8 +27,8 @@ typedef struct semver_version_s {
 
 struct metadata_t {
   char * stage;
-  int pr_version[50];
-  int pr_version_count;
+  int version[50];
+  int version_count;
 };
 
 /**
@@ -39,7 +39,13 @@ int
 semver_satisfies (semver_t x, semver_t y);
 
 int
+semver_matches (const char * operator, semver_t x, semver_t y);
+
+int
 semver_compare (semver_t x, semver_t y);
+
+int
+semver_compare_meta (const char *x, const char *y);
 
 int
 semver_gt (semver_t x, semver_t y);
@@ -59,11 +65,20 @@ semver_eq (semver_t x, semver_t y);
 int
 semver_neq (semver_t x, semver_t y);
 
+void
+semver_render (semver_t *x, char * dest);
+
 int
 semver_parse (const char *str, semver_t *ver);
 
-int
-semver_valid_chars (const char *s, const char *c);
+void
+semver_bump (semver_t *x);
+
+void
+semver_bump_minor (semver_t *x);
+
+void
+semver_bump_patch (semver_t *x);
 
 int
-semver_parse_int (const char *s);
+semver_valid_chars (const char *s);
