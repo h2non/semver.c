@@ -229,6 +229,7 @@ semver_compare (semver_t x, semver_t y) {
   int matches = semver_compare_version(x, y);
   if (matches) return matches;
 
+  // Compare prerelease, if exists
   if (x.metadata == NULL
       && y.prerelease == NULL
       && x.prerelease) return -1;
@@ -241,6 +242,7 @@ semver_compare (semver_t x, semver_t y) {
     if (valid) return valid;
   }
 
+  // Compare metadata, if exists
   if (y.metadata == NULL
       && x.metadata) return -1;
   if (x.metadata == NULL
