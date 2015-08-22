@@ -10,14 +10,14 @@
 #include <string.h>
 #include "semver.h"
 
-#define NUMBERS      "0123456789"
-#define ALPHA        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DELIMITER    "."
 #define PR_DELIMITER "-"
 #define MT_DELIMITER "+"
-#define DELIMITERS   DELIMITER PR_DELIMITER MT_DELIMITER
-#define MAX_SIZE     sizeof(char) * 255
 #define SLICE_SIZE   50
+#define MAX_SIZE     sizeof(char) * 255
+#define NUMBERS      "0123456789"
+#define ALPHA        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define DELIMITERS   DELIMITER PR_DELIMITER MT_DELIMITER
 
 const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
