@@ -86,20 +86,16 @@ $ clib install h2non/semver.c
 
 ## API
 
-#### struct semver_t { int major, int minor, int patch, semver_pr_t pr }
+#### struct semver_t { int major, int minor, int patch, char * prerelease, char * metadata }
 
 semver base struct.
 
-#### struct semver_pr { int number, const char stage }
-
-semver prerelease struct.
-
-#### int semver_parse(const char *str, semver_t *ver)
+#### semver_parse(const char *str, semver_t *ver) => int
 
 Parses a string as semver expression.
-Returns `-1` in case parsing error due to invalid expression.
+Returns `-1` in case of parsing error.
 
-#### int semver_compare(semver_t a, semver_t b)
+#### semver_compare(semver_t a, semver_t b) => int
 
 Compare versions `a` with `b`.
 
@@ -107,6 +103,25 @@ Returns:
 - `-1` in case of lower version.
 - `0` in case of equal versions.
 - `1` in case of higher version.
+
+#### semver_satisfies(semver_t a, semver_t b) => int
+
+Checks if both versions can be satisfied
+based on the given comparison operator.
+
+**Allowed operators**:
+
+- `=` - Equality
+- `>=` - Higher or equal to
+- `<=` - Lower or equal to
+- `<` - Lower than
+- `>` - Higher than
+- `^` - Caret operator comparison ([more info](https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4))
+ - - `~` - Tilde operator comparison ([more info](https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1))
+
+**Returns**:
+`1`  - Can be satisfied
+`0`  - Cannot be satisfied
 
 #### int semver_eq(semver_t a, semver_t b)
 

@@ -452,6 +452,7 @@ test_satisfies() {
     semver_parse(args.y, &verY);
 
     int resolution = semver_satisfies(verX, verY, args.op);
+    printf("Satisfies: %s %s %s => %d == %d\n", args.x, args.op, args.y, args.expected, resolution);
     assert(resolution == args.expected);
   }
 

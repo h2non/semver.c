@@ -351,17 +351,19 @@ semver_lte (semver_t x, semver_t y) {
  * based on the given comparison operator.
  *
  * Allowed operators:
- * - `=` - Equality
+ *
+ * - `=`  - Equality
  * - `>=` - Higher or equal to
  * - `<=` - Lower or equal to
- * - `<` - Lower than
- * - `>` - Higher than
- * - `^` - Caret comparison (see https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4)
- - - `~` - Tilde comparison (see https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1)
+ * - `<`  - Lower than
+ * - `>`  - Higher than
+ * - `^`  - Caret comparison (see https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4)
+ * - `~`  - Tilde comparison (see https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1)
  *
  * Returns:
- * `1`  - Can be satisfied
- * `0`  - Cannot be satisfied
+ *
+ * `1` - Can be satisfied
+ * `0` - Cannot be satisfied
  */
 
 int
