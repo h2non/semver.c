@@ -269,10 +269,11 @@ semver_compare_version (semver_t x, semver_t y) {
   int match;
 
   match = compare_versions(x.major, y.major);
-  printf(">> Result comparison: %d\n\n", match);
+  printf(">> Result comparison major: %d\n\n", match);
   if (match) return match;
 
   match = compare_versions(x.minor, y.minor);
+  printf(">> Result comparison minor: %d\n\n", match);
   if (match) return match;
 
   match = compare_versions(x.patch, y.patch);
