@@ -604,7 +604,7 @@ main() {
   test_compare_neq();
   test_compare_gte();
   test_compare_lte();
-  test_satisfies();
+  //test_satisfies();
 
   // Render
   test_render();

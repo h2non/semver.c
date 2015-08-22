@@ -92,12 +92,12 @@ parse_slice (char *buf, int len, char sep) {
   // Extract the slice from buffer
   int size = sizeof(*pr) * plen;
   char * cache[size];
-  strcpy((char*) cache, buf);
-  strcut((char*) cache, 0, strlen(buf) - plen + 1);
+  strcpy((char *) cache, buf);
+  strcut((char *) cache, 0, strlen(buf) - plen + 1);
 
   // Allocate in heap
   char * part = malloc(size);
-  strcpy(part, (char*) cache);
+  strcpy(part, (char *) cache);
 
   // Remove chars from original buffer buffer
   int offset = strlen(buf) - strlen(pr);
@@ -110,21 +110,21 @@ int
 semver_parse (const char *str, semver_t *ver) {
   int len = strlen(str);
   char * buf[len];
-  strcpy((char*) buf, str);
+  strcpy((char *) buf, str);
 
   int valid = semver_is_valid(str);
   if (!valid) return -1;
 
-  ver->metadata = parse_slice((char*) buf, len, MT_DELIMITER[0]);
-  ver->prerelease = parse_slice((char*) buf, len, PR_DELIMITER[0]);
+  ver->metadata = parse_slice((char *) buf, len, MT_DELIMITER[0]);
+  ver->prerelease = parse_slice((char *) buf, len, PR_DELIMITER[0]);
 
-  return semver_parse_version((char*) buf, ver);
+  return semver_parse_version((char *) buf, ver);
 }
 
 int
 semver_parse_version (const char *str, semver_t *ver) {
   int count = 0;
-  char * slice = strtok((char*) str, DELIMITER);
+  char * slice = strtok((char *) str, DELIMITER);
 
   while (slice != NULL && count < 3) {
     count++;
@@ -173,7 +173,7 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
 
     // If alpha, store in the buffer
     if (count > 1 && ver->stage != NULL) {
-      realloc(ver->stage, sizeof(slice) + 1);
+      ver->stage = (char *) realloc(ver->stage, sizeof(slice) + 1);
       strcat(ver->stage, DELIMITER);
       strcat(ver->stage, slice);
     } else {
@@ -256,13 +256,9 @@ semver_compare (semver_t x, semver_t y) {
 
 static int
 compare_versions (int x, int y) {
-  if (x != y) {
-    if (x > y) {
-      return 1;
-    }
-    return -1;
-  }
-  return 0;
+  if (x == y) return 0;
+  if (x > y) return 1;
+  return -1;
 }
 
 int
