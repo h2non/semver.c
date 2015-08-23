@@ -179,6 +179,7 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
       ver->stage = buf;
     }
 
+    // Continue with the next slice
     slice = strtok(NULL, DELIMITER);
   }
 
