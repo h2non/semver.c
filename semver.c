@@ -5,8 +5,6 @@
 // MIT licensed
 //
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "semver.h"
 
