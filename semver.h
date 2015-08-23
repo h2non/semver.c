@@ -40,7 +40,7 @@ struct metadata_s {
  */
 
 int
-semver_satisfies (semver_t x, semver_t y, const char *operator);
+semver_satisfies (semver_t x, semver_t y, const char *op);
 
 int
 semver_compare (semver_t x, semver_t y);
@@ -49,7 +49,7 @@ int
 semver_compare_version (semver_t x, semver_t y);
 
 int
-semver_compare_meta (struct metadata_s xm, struct metadata_s ym);
+semver_compare_metadata (struct metadata_s xm, struct metadata_s ym);
 
 int
 semver_gt (semver_t x, semver_t y);

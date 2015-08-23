@@ -614,7 +614,7 @@ main() {
   // Clean up
   test_free();
 
-  // Private helpers
+  // Helpers
   test_valid_chars();
 
   return 0;

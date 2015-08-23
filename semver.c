@@ -5,6 +5,8 @@
 // MIT licensed
 //
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "semver.h"
 
@@ -103,20 +105,38 @@ parse_slice (char *buf, int len, char sep) {
   return part;
 }
 
+/**
+ * Parses a string as semver expression.
+ *
+ * Returns:
+ *
+ * `0` - Parsed successfully
+ * `-1` - In case of error
+ */
+
 int
 semver_parse (const char *str, semver_t *ver) {
+  int valid = semver_is_valid(str);
+  if (!valid) return -1;
+
   int len = strlen(str);
   char * buf[len];
   strcpy((char *) buf, str);
-
-  int valid = semver_is_valid(str);
-  if (!valid) return -1;
 
   ver->metadata = parse_slice((char *) buf, len, MT_DELIMITER[0]);
   ver->prerelease = parse_slice((char *) buf, len, PR_DELIMITER[0]);
 
   return semver_parse_version((char *) buf, ver);
 }
+
+/**
+ * Parses a given string as semver expression.
+ *
+ * Returns:
+ *
+ * `0` - Parsed successfully
+ * `-1` - In case of error
+ */
 
 int
 semver_parse_version (const char *str, semver_t *ver) {
@@ -145,6 +165,11 @@ semver_parse_version (const char *str, semver_t *ver) {
 
   return 0;
 }
+
+/**
+ * Parses the metadata slice of a semver expression.
+ * This function is mostly used internally.
+ */
 
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver) {
@@ -187,7 +212,7 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
 }
 
 static int
-compare_meta_init (char *x, char *y) {
+compare_metadata (char *x, char *y) {
   int error;
   struct metadata_s xm = {};
   struct metadata_s ym = {};
@@ -204,7 +229,7 @@ compare_meta_init (char *x, char *y) {
     return error;
   }
 
-  int resolution = semver_compare_meta(xm, ym);
+  int resolution = semver_compare_metadata(xm, ym);
 
   // Free from heap
   if (xm.stage) free((&xm)->stage);
@@ -236,7 +261,7 @@ semver_compare (semver_t x, semver_t y) {
       && y.prerelease) return 1;
 
   if (x.prerelease && y.prerelease) {
-    int valid = compare_meta_init(x.prerelease, y.prerelease);
+    int valid = compare_metadata(x.prerelease, y.prerelease);
     if (valid) return valid;
   }
 
@@ -247,7 +272,7 @@ semver_compare (semver_t x, semver_t y) {
       && y.metadata) return 1;
 
   if (x.metadata && y.metadata) {
-    int valid = compare_meta_init(x.metadata, y.metadata);
+    int valid = compare_metadata(x.metadata, y.metadata);
     if (valid) return valid;
   }
 
@@ -255,31 +280,41 @@ semver_compare (semver_t x, semver_t y) {
 }
 
 static int
-compare_versions (int x, int y) {
+binary_comparison (int x, int y) {
   if (x == y) return 0;
   if (x > y) return 1;
   return -1;
 }
 
+/**
+ * Performs a major, minor and patch binary comparison (x, y).
+ * This function is mostly used internally
+ *
+ * Returns:
+ *
+ * `0` - If versiona are equal
+ * `1` - If x is higher than y
+ * `-1` - If x is lower than y
+ */
+
 int
 semver_compare_version (semver_t x, semver_t y) {
-  int match;
+  int resolution;
 
-  match = compare_versions(x.major, y.major);
-  if (match) return match;
+  resolution = binary_comparison(x.major, y.major);
+  if (resolution) return resolution;
 
-  match = compare_versions(x.minor, y.minor);
-  if (match) return match;
+  resolution = binary_comparison(x.minor, y.minor);
+  if (resolution) return resolution;
 
-  match = compare_versions(x.patch, y.patch);
-  if (match) return match;
+  resolution = binary_comparison(x.patch, y.patch);
+  if (resolution) return resolution;
 
   return 0;
 }
 
-int
-semver_compare_meta (struct metadata_s xm, struct metadata_s ym) {
-  // Compare stage string by length
+static int
+compare_metadata_stage (struct metadata_s xm, struct metadata_s ym) {
   if (xm.stage != NULL && ym.stage != NULL) {
     int xl = strlen(xm.stage);
     int yl = strlen(ym.stage);
@@ -290,21 +325,56 @@ semver_compare_meta (struct metadata_s xm, struct metadata_s ym) {
     if (xm.stage != NULL && ym.stage == NULL) return -1;
   }
 
-  // Compare version numbers length
+  return 0;
+}
+
+static int
+compare_metadata_versions (struct metadata_s xm, struct metadata_s ym) {
+  // First compare that version length matches
   if (xm.version_count != ym.version_count) {
     return xm.version_count < ym.version_count ? 1 : -1;
   }
 
-  // Compare each version slice
+  // Then compare each version slice individually
   for (int i = 0; i < xm.version_count; i++) {
     int xv = xm.version[i];
     int yv = ym.version[i];
-    if (xv > yv) return 1;
-    if (xv < yv) return -1;
+    int resolution = binary_comparison(xv, yv);
+    if (resolution) return resolution;
   }
 
   return 0;
 }
+
+/**
+ * Binary comparison for versions (x, y).
+ * This function is mostly used internally
+ *
+ * Returns:
+ *
+ * `0` - If versiona are equal
+ * `1` - If x is higher than y
+ * `-1` - If x is lower than y
+ */
+
+int
+semver_compare_metadata (struct metadata_s xm, struct metadata_s ym) {
+  int resolution;
+
+  // Compare stage string by length
+  resolution = compare_metadata_stage(xm, ym);
+  if (resolution) return resolution;
+
+  // Compare version numbers length
+  resolution = compare_metadata_versions(xm, ym);
+  if (resolution) return resolution;
+
+  return 0;
+}
+
+/**
+ * Performs a `greater than` comparison
+ */
 
 int
 semver_gt (semver_t x, semver_t y) {
@@ -312,11 +382,19 @@ semver_gt (semver_t x, semver_t y) {
   return resolution == 1 ? 1 : 0;
 }
 
+/**
+ * Performs a `lower than` comparison
+ */
+
 int
 semver_lt (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
   return resolution == -1 ? 1 : 0;
 }
+
+/**
+ * Performs a `equality` comparison
+ */
 
 int
 semver_eq (semver_t x, semver_t y) {
@@ -324,17 +402,29 @@ semver_eq (semver_t x, semver_t y) {
   return resolution == 0 ? 1 : 0;
 }
 
+/**
+ * Performs a `non equal to` comparison
+ */
+
 int
 semver_neq (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
   return resolution != 0;
 }
 
+/**
+ * Performs a `greater than or equal` comparison
+ */
+
 int
 semver_gte (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
   return resolution >= 0;
 }
+
+/**
+ * Performs a `lower than or equal` comparison
+ */
 
 int
 semver_lte (semver_t x, semver_t y) {
@@ -411,6 +501,10 @@ semver_satisfies (semver_t x, semver_t y, const char *operator) {
 
   return 0;
 }
+
+/**
+ * Free allocated memory for the given version.
+ */
 
 void
 semver_free (semver_t *x) {

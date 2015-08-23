@@ -101,7 +101,11 @@ semver base struct.
 #### semver_parse(const char *str, semver_t *ver) => int
 
 Parses a string as semver expression.
-Returns `-1` in case of parsing error.
+
+**Returns**:
+
+- `-1` - In case of invalid semver or parsing error.
+- `0` - All was fine!
 
 #### semver_compare(semver_t a, semver_t b) => int
 
