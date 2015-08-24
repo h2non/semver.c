@@ -1,6 +1,6 @@
 {
   "name": "semver",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "repo": "h2non/semver.c",
   "author": "Tomas Aparicio",
   "license": "MIT",
