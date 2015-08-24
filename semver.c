@@ -103,7 +103,7 @@ parse_slice (char *buf, int len, char sep) {
 
   // Allocate in heap
   char * part = malloc(size);
-  if (part == NULL) return "";
+  if (part == NULL) return NULL;
   strcpy(part, (char *) cache);
 
   // Remove chars from original buffer buffer
