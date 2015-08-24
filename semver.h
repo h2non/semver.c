@@ -49,7 +49,7 @@ int
 semver_compare_version (semver_t x, semver_t y);
 
 int
-semver_compare_metadata (struct metadata_s xm, struct metadata_s ym);
+semver_compare_metadata (semver_t x, semver_t y);
 
 int
 semver_gt (semver_t x, semver_t y);

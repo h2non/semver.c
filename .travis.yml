@@ -1,3 +1,7 @@
 language: c
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install valgrind -qq
 script:
   - make test
+  - valgrind --leak-check=full --error-exitcode=1 ./test

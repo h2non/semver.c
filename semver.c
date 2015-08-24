@@ -41,23 +41,21 @@ strcut (char *str, int begin, int len) {
 }
 
 static int
-has_valid_chars (const char *s, const char *c) {
-  size_t clen = strlen(c);
-  size_t slen = strlen(s);
+char_in_matrix (const char c, const char *matrix, int len) {
+  for (unsigned int x = 0; x < len; x++) {
+    if ((char) matrix[x] == c) return 0;
+  }
+  return 1;
+}
 
-  for (unsigned int i = 0; i < slen; i++) {
-    char v = s[i];
-    int match = -1;
+static int
+has_valid_chars (const char *str, const char *matrix) {
+  size_t len = strlen(str);
+  size_t mlen = strlen(matrix);
 
-    for (unsigned int x = 0; x < clen; x++) {
-      char y = c[x];
-      if (y == v) {
-        match = 0;
-        break;
-      }
-    }
-
-    if (match) return 0;
+  for (unsigned int i = 0; i < len; i++) {
+    if (char_in_matrix(str[i], matrix, mlen))
+      return 0;
   }
 
   return 1;
@@ -80,6 +78,13 @@ semver_is_alpha (const char *s) {
 static int
 semver_is_number (const char *s) {
   return has_valid_chars(s, NUMBERS);
+}
+
+static int
+binary_comparison (int x, int y) {
+  if (x == y) return 0;
+  if (x > y) return 1;
+  return -1;
 }
 
 static char *
@@ -212,104 +217,12 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
 }
 
 static int
-compare_metadata (char *x, char *y) {
-  int error;
-  struct metadata_s xm = {};
-  struct metadata_s ym = {};
-
-  error = semver_parse_prerelease(x, &xm);
+compare_metadata_prerelease (char *x, struct metadata_s *xm) {
+  int error = semver_parse_prerelease(x, xm);
   if (error) {
-     if (xm.stage) free((&xm)->stage);
+     if (xm->stage) free(xm->stage);
      return error;
   }
-
-  error = semver_parse_prerelease(y, &ym);
-  if (error) {
-    if (ym.stage) free((&ym)->stage);
-    return error;
-  }
-
-  int resolution = semver_compare_metadata(xm, ym);
-
-  // Free from heap
-  if (xm.stage) free((&xm)->stage);
-  if (ym.stage) free((&ym)->stage);
-
-  return resolution;
-}
-
-/**
- * Compare two semantic versions (x, y).
- *
- * Returns:
- * - `1` if x is higher than y
- * - `0` if x is equal to y
- * - `-1` if x is lower than y
- */
-
-int
-semver_compare (semver_t x, semver_t y) {
-  int matches = semver_compare_version(x, y);
-  if (matches) return matches;
-
-  // Compare prerelease, if exists
-  if (x.metadata == NULL
-      && y.prerelease == NULL
-      && x.prerelease) return -1;
-  if (x.metadata == NULL
-      && x.prerelease == NULL
-      && y.prerelease) return 1;
-
-  if (x.prerelease && y.prerelease) {
-    int valid = compare_metadata(x.prerelease, y.prerelease);
-    if (valid) return valid;
-  }
-
-  // Compare metadata, if exists
-  if (y.metadata == NULL
-      && x.metadata) return -1;
-  if (x.metadata == NULL
-      && y.metadata) return 1;
-
-  if (x.metadata && y.metadata) {
-    int valid = compare_metadata(x.metadata, y.metadata);
-    if (valid) return valid;
-  }
-
-  return 0;
-}
-
-static int
-binary_comparison (int x, int y) {
-  if (x == y) return 0;
-  if (x > y) return 1;
-  return -1;
-}
-
-/**
- * Performs a major, minor and patch binary comparison (x, y).
- * This function is mostly used internally
- *
- * Returns:
- *
- * `0` - If versiona are equal
- * `1` - If x is higher than y
- * `-1` - If x is lower than y
- */
-
-int
-semver_compare_version (semver_t x, semver_t y) {
-  int resolution;
-
-  resolution = binary_comparison(x.major, y.major);
-  if (resolution) return resolution;
-
-  resolution = binary_comparison(x.minor, y.minor);
-  if (resolution) return resolution;
-
-  resolution = binary_comparison(x.patch, y.patch);
-  if (resolution) return resolution;
-
   return 0;
 }
 
@@ -346,8 +259,65 @@ compare_metadata_versions (struct metadata_s xm, struct metadata_s ym) {
   return 0;
 }
 
+static int
+compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
+  int r;
+
+  // Compare stage strings by length
+  (  (r = compare_metadata_stage(xm, ym)) == 0
+  // Compare versions per number range
+  && (r = compare_metadata_versions(xm, ym)));
+
+  return r;
+}
+
+static int
+compare_metadata (char *x, char *y) {
+  struct metadata_s xm = {};
+  struct metadata_s ym = {};
+
+  if (compare_metadata_prerelease(x, &xm)
+    || compare_metadata_prerelease(y, &ym)) return -1;
+
+  int resolution = compare_build_slice(xm, ym);
+
+  // Free allocations from heap
+  if (xm.stage) free((&xm)->stage);
+  if (ym.stage) free((&ym)->stage);
+
+  return resolution;
+}
+
+int
+semver_compare_metadata (semver_t x, semver_t y) {
+  // Compare prerelease, if exists
+  if (x.metadata == NULL
+      && y.prerelease == NULL
+      && x.prerelease) return -1;
+  if (x.metadata == NULL
+      && x.prerelease == NULL
+      && y.prerelease) return 1;
+
+  if (x.prerelease && y.prerelease) {
+    int res = compare_metadata(x.prerelease, y.prerelease);
+    if (res) return res;
+  }
+
+  // Compare metadata, if exists
+  if (y.metadata == NULL
+      && x.metadata) return -1;
+  if (x.metadata == NULL
+      && y.metadata) return 1;
+
+  if (x.metadata && y.metadata) {
+    return compare_metadata(x.metadata, y.metadata);
+  }
+
+  return 0;
+}
+
 /**
- * Binary comparison for versions (x, y).
+ * Performs a major, minor and patch binary comparison (x, y).
  * This function is mostly used internally
  *
  * Returns:
@@ -358,18 +328,33 @@ compare_metadata_versions (struct metadata_s xm, struct metadata_s ym) {
  */
 
 int
-semver_compare_metadata (struct metadata_s xm, struct metadata_s ym) {
-  int resolution;
+semver_compare_version (semver_t x, semver_t y) {
+  int res;
 
-  // Compare stage string by length
-  resolution = compare_metadata_stage(xm, ym);
-  if (resolution) return resolution;
+  ((  res = binary_comparison(x.major, y.major)) == 0
+  && (res = binary_comparison(x.minor, y.minor)) == 0
+  && (res = binary_comparison(x.patch, y.patch)));
 
-  // Compare version numbers length
-  resolution = compare_metadata_versions(xm, ym);
-  if (resolution) return resolution;
+  return res;
+}
 
-  return 0;
+/**
+ * Compare two semantic versions (x, y).
+ *
+ * Returns:
+ * - `1` if x is higher than y
+ * - `0` if x is equal to y
+ * - `-1` if x is lower than y
+ */
+
+int
+semver_compare (semver_t x, semver_t y) {
+  int res;
+
+  (  (res = semver_compare_version(x, y)) == 0
+  && (res = semver_compare_metadata(x, y)));
+
+  return res;
 }
 
 /**
@@ -379,7 +364,7 @@ semver_compare_metadata (struct metadata_s xm, struct metadata_s ym) {
 int
 semver_gt (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
-  return resolution == 1 ? 1 : 0;
+  return resolution == 1;
 }
 
 /**
@@ -389,7 +374,7 @@ semver_gt (semver_t x, semver_t y) {
 int
 semver_lt (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
-  return resolution == -1 ? 1 : 0;
+  return resolution == -1;
 }
 
 /**
@@ -399,7 +384,7 @@ semver_lt (semver_t x, semver_t y) {
 int
 semver_eq (semver_t x, semver_t y) {
   int resolution = semver_compare(x, y);
-  return resolution == 0 ? 1 : 0;
+  return resolution == 0;
 }
 
 /**
@@ -453,37 +438,37 @@ semver_lte (semver_t x, semver_t y) {
  */
 
 int
-semver_satisfies (semver_t x, semver_t y, const char *operator) {
-  int len = strlen(operator);
+semver_satisfies (semver_t x, semver_t y, const char *op) {
+  int len = strlen(op);
   if (len == 0) return 0;
 
   // Infer the comparison operator
-  int op[2] = {};
+  int opc[2] = {};
   len = len > 2 ? 2 : len;
   for (int i = 0; i < len; i++) {
-    op[i] = (int) operator[i];
+    opc[i] = (int) op[i];
   }
 
   // Compare based on the specific operator
-  if (op[0] == SYMBOL_GT) {
-    if (op[1] == SYMBOL_EQ) {
+  if (opc[0] == SYMBOL_GT) {
+    if (opc[1] == SYMBOL_EQ) {
       return semver_gte(x, y);
     }
     return semver_gt(x, y);
   }
 
-  if (op[0] == SYMBOL_LT) {
-    if (op[1] == SYMBOL_EQ) {
+  if (opc[0] == SYMBOL_LT) {
+    if (opc[1] == SYMBOL_EQ) {
       return semver_lte(x, y);
     }
     return semver_lt(x, y);
   }
 
   // Strict equality
-  if (op[0] == SYMBOL_EQ) return semver_eq(x, y);
+  if (opc[0] == SYMBOL_EQ) return semver_eq(x, y);
 
   // Caret operator
-  if (op[0] == SYMBOL_CF) {
+  if (opc[0] == SYMBOL_CF) {
     if (x.major == y.major) {
       if (x.major == 0) {
         return x.minor >= y.minor;
@@ -495,7 +480,7 @@ semver_satisfies (semver_t x, semver_t y, const char *operator) {
   }
 
   // Tilde operator
-  if (op[0] == SYMBOL_TF) {
+  if (opc[0] == SYMBOL_TF) {
     return x.major == y.major && x.minor == y.minor;
   }
 
