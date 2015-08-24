@@ -1,6 +1,7 @@
 language: c
 script:
   - make test
-#before_install:
-  #- sudo apt-get update
-  #- sudo apt-get install valgrind -qq
+  - make valgrind
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install valgrind -qq

@@ -103,6 +103,7 @@ parse_slice (char *buf, int len, char sep) {
 
   // Allocate in heap
   char * part = malloc(size);
+  if (part == NULL) return "";
   strcpy(part, (char *) cache);
 
   // Remove chars from original buffer buffer
@@ -173,6 +174,44 @@ semver_parse_version (const char *str, semver_t *ver) {
   return 0;
 }
 
+static int
+parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
+  // If first alpha slice, init the allocation
+  if (ver->stage == NULL) {
+    char * buf = malloc(sizeof(slice));
+    if (buf == NULL) return -1;
+
+    strcpy(buf, slice);
+    ver->stage = buf;
+  }
+  // If alpha, push in the buffer
+  else {
+    int size = sizeof(ver->stage) + sizeof(slice) + 1;
+    char * buf = realloc(ver->stage, size);
+
+    if (buf == NULL) {
+      free(ver->stage);
+      return -1;
+    }
+
+    ver->stage = buf;
+    strcat(ver->stage, DELIMITER);
+    strcat(ver->stage, slice);
+  }
+
+  return 0;
+}
+
+static int
+parse_prerelease_version (struct metadata_s *ver, const char *slice) {
+  int num = parse_int(slice);
+
+  if (num == -1) return num;
+  ver->version[ver->version_count++] = num;
+
+  return 0;
+}
+
 /**
  * Parses the metadata slice of a semver expression.
  * This function is mostly used internally.
@@ -180,37 +219,28 @@ semver_parse_version (const char *str, semver_t *ver) {
 
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver) {
+  int result;
+  ver->version_count = 0;
+  ver->stage = NULL;
+
   size_t len = strlen(str);
   if (len > SLICE_SIZE) return -1;
 
   char * slice = strtok(str, DELIMITER);
 
-  int count = 0;
-  ver->version_count = 0;
-
   while (slice != NULL) {
-    count++;
+    result = 0;
 
-    // If number, cast it and store in the version buffer
+    // If numeric, cast it and store in the version buffer
     if (semver_is_number(slice)) {
-      int num = parse_int(slice);
-      if (num == -1) return num;
-      ver->version[ver->version_count++] = num;
+      result = parse_prerelease_version(ver, slice);
     }
-
-    // If alpha, store in the buffer
-    else if (count > 1 && ver->stage != NULL) {
-      ver->stage = (char *) realloc(ver->stage, sizeof(slice) + 1);
-      strcat(ver->stage, DELIMITER);
-      strcat(ver->stage, slice);
-    }
-
-    // If first alpha slice, init the allocation
+    // If non-numeric, push to the buffer
     else {
-      char * buf = malloc(sizeof(slice));
-      strcpy(buf, slice);
-      ver->stage = buf;
+      result = parse_prerelease_meta(ver, slice);
     }
+
+    if (result) return -1;
 
     // Continue with the next slice
     slice = strtok(NULL, DELIMITER);

@@ -6,7 +6,7 @@ test: semver.c semver_test.c
 	@$(CC) $^ $(CFLAGS) -o $@
 	@./test
 
-leaks:
-	@$(VALGRIND) --leak-check=full --error-exitcode=1 ./test
+valgrind: ./test
+	@$(VALGRIND) --leak-check=full --error-exitcode=1 $^
 
 .PHONY: test
