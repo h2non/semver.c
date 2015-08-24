@@ -43,6 +43,12 @@ int
 semver_satisfies (semver_t x, semver_t y, const char *op);
 
 int
+semver_satisfies_caret (semver_t x, semver_t y);
+
+int
+semver_satisfies_patch (semver_t x, semver_t y);
+
+int
 semver_compare (semver_t x, semver_t y);
 
 int

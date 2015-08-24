@@ -187,23 +187,24 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
   ver->version_count = 0;
 
   while (slice != NULL) {
-    if (count++ > SLICE_SIZE) return -1;
+    count++;
 
     // If number, cast it and store in the version buffer
     if (semver_is_number(slice)) {
       int num = parse_int(slice);
       if (num == -1) return num;
       ver->version[ver->version_count++] = num;
-      slice = strtok(NULL, DELIMITER);
-      continue;
     }
 
     // If alpha, store in the buffer
-    if (count > 1 && ver->stage != NULL) {
+    else if (count > 1 && ver->stage != NULL) {
       ver->stage = (char *) realloc(ver->stage, sizeof(slice) + 1);
       strcat(ver->stage, DELIMITER);
       strcat(ver->stage, slice);
-    } else {
+    }
+
+    // If first alpha slice, init the allocation
+    else {
       char * buf = malloc(sizeof(slice));
       strcpy(buf, slice);
       ver->stage = buf;
@@ -261,14 +262,14 @@ compare_metadata_versions (struct metadata_s xm, struct metadata_s ym) {
 
 static int
 compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
-  int r;
+  int res = 0;
 
   // Compare stage strings by length
-  (  (r = compare_metadata_stage(xm, ym)) == 0
+  (  (res = compare_metadata_stage(xm, ym)) == 0
   // Compare versions per number range
-  && (r = compare_metadata_versions(xm, ym)));
+  && (res = compare_metadata_versions(xm, ym)));
 
-  return r;
+  return res;
 }
 
 static int
@@ -290,7 +291,7 @@ compare_metadata (char *x, char *y) {
 
 int
 semver_compare_metadata (semver_t x, semver_t y) {
-  // Compare prerelease, if exists
+  // Compare prerelease, if present
   if (x.metadata == NULL
       && y.prerelease == NULL
       && x.prerelease) return -1;
@@ -303,15 +304,14 @@ semver_compare_metadata (semver_t x, semver_t y) {
     if (res) return res;
   }
 
-  // Compare metadata, if exists
+  // Compare build metadata, if present
   if (y.metadata == NULL
       && x.metadata) return -1;
   if (x.metadata == NULL
       && y.metadata) return 1;
 
-  if (x.metadata && y.metadata) {
+  if (x.metadata && y.metadata)
     return compare_metadata(x.metadata, y.metadata);
-  }
 
   return 0;
 }
@@ -329,7 +329,7 @@ semver_compare_metadata (semver_t x, semver_t y) {
 
 int
 semver_compare_version (semver_t x, semver_t y) {
-  int res;
+  int res = 0;
 
   ((  res = binary_comparison(x.major, y.major)) == 0
   && (res = binary_comparison(x.minor, y.minor)) == 0
@@ -349,7 +349,7 @@ semver_compare_version (semver_t x, semver_t y) {
 
 int
 semver_compare (semver_t x, semver_t y) {
-  int res;
+  int res = 0;
 
   (  (res = semver_compare_version(x, y)) == 0
   && (res = semver_compare_metadata(x, y)));
@@ -363,8 +363,7 @@ semver_compare (semver_t x, semver_t y) {
 
 int
 semver_gt (semver_t x, semver_t y) {
-  int resolution = semver_compare(x, y);
-  return resolution == 1;
+  return semver_compare(x, y) == 1;
 }
 
 /**
@@ -373,8 +372,7 @@ semver_gt (semver_t x, semver_t y) {
 
 int
 semver_lt (semver_t x, semver_t y) {
-  int resolution = semver_compare(x, y);
-  return resolution == -1;
+  return semver_compare(x, y) == -1;
 }
 
 /**
@@ -383,8 +381,7 @@ semver_lt (semver_t x, semver_t y) {
 
 int
 semver_eq (semver_t x, semver_t y) {
-  int resolution = semver_compare(x, y);
-  return resolution == 0;
+  return semver_compare(x, y) == 0;
 }
 
 /**
@@ -393,8 +390,7 @@ semver_eq (semver_t x, semver_t y) {
 
 int
 semver_neq (semver_t x, semver_t y) {
-  int resolution = semver_compare(x, y);
-  return resolution != 0;
+  return semver_compare(x, y) != 0;
 }
 
 /**
@@ -403,8 +399,7 @@ semver_neq (semver_t x, semver_t y) {
 
 int
 semver_gte (semver_t x, semver_t y) {
-  int resolution = semver_compare(x, y);
-  return resolution >= 0;
+  return semver_compare(x, y) >= 0;
 }
 
 /**
@@ -413,8 +408,47 @@ semver_gte (semver_t x, semver_t y) {
 
 int
 semver_lte (semver_t x, semver_t y) {
-  int resolution = semver_compare(x, y);
-  return resolution <= 0;
+  return semver_compare(x, y) <= 0;
+}
+
+/**
+ * Checks if version `x` can be satisfied by `y`
+ * performing a comparison with caret operator.
+ *
+ * See: https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4
+ *
+ * Returns:
+ *
+ * `1` - Can be satisfied
+ * `0` - Cannot be satisfied
+ */
+
+int
+semver_satisfies_caret (semver_t x, semver_t y) {
+  if (x.major == y.major) {
+    if (x.major == 0) {
+      return x.minor >= y.minor;
+    }
+    return 1;
+  }
+  return 0;
+}
+
+/**
+ * Checks if version `x` can be satisfied by `y`
+ * performing a comparison with tilde operator.
+ *
+ * See: https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1
+ *
+ * Returns:
+ *
+ * `1` - Can be satisfied
+ * `0` - Cannot be satisfied
+ */
+
+int
+semver_satisfies_patch (semver_t x, semver_t y) {
+  return x.major == y.major && x.minor == y.minor;
 }
 
 /**
@@ -449,7 +483,19 @@ semver_satisfies (semver_t x, semver_t y, const char *op) {
     opc[i] = (int) op[i];
   }
 
-  // Compare based on the specific operator
+  // Caret operator
+  if (opc[0] == SYMBOL_CF)
+    return semver_satisfies_caret(x, y);
+
+  // Tilde operator
+  if (opc[0] == SYMBOL_TF)
+    return semver_satisfies_patch(x, y);
+
+  // Strict equality
+  if (opc[0] == SYMBOL_EQ)
+    return semver_eq(x, y);
+
+  // Greater than or equal comparison
   if (opc[0] == SYMBOL_GT) {
     if (opc[1] == SYMBOL_EQ) {
       return semver_gte(x, y);
@@ -457,31 +503,12 @@ semver_satisfies (semver_t x, semver_t y, const char *op) {
     return semver_gt(x, y);
   }
 
+  // Lower than or equal comparison
   if (opc[0] == SYMBOL_LT) {
     if (opc[1] == SYMBOL_EQ) {
       return semver_lte(x, y);
     }
     return semver_lt(x, y);
-  }
-
-  // Strict equality
-  if (opc[0] == SYMBOL_EQ) return semver_eq(x, y);
-
-  // Caret operator
-  if (opc[0] == SYMBOL_CF) {
-    if (x.major == y.major) {
-      if (x.major == 0) {
-        return x.minor >= y.minor;
-      } else {
-        return 1;
-      }
-    }
-    return 0;
-  }
-
-  // Tilde operator
-  if (opc[0] == SYMBOL_TF) {
-    return x.major == y.major && x.minor == y.minor;
   }
 
   return 0;

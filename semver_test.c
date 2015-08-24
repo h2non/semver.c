@@ -487,15 +487,15 @@ test_render() {
 
   semver_t ver = {1, 5, 8};
   char * str[10] = {};
-  semver_render(&ver, str);
-  assert(strcmp(str, "1.5.8") == 0);
+  semver_render(&ver, (char *) str);
+  assert(strcmp((char *) str, "1.5.8") == 0);
 
   semver_t ver2 = {1, 5, 8};
   ver2.prerelease = "alpha.1";
   ver2.metadata = "1232323";
   char * str2[22] = {};
-  semver_render(&ver2, str2);
-  assert(strcmp(str2, "1.5.8-alpha.1+1232323") == 0);
+  semver_render(&ver2, (char *) str2);
+  assert(strcmp((char *) str2, "1.5.8-alpha.1+1232323") == 0);
 
   test_end();
 }
