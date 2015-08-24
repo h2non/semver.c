@@ -42,6 +42,9 @@ compare_helper (char *a, char *b, int expected, fn test_fn) {
 
   int resolution = test_fn(verX, verY);
   assert(resolution == expected);
+
+  semver_free(&verX);
+  semver_free(&verY);
 }
 
 static void
@@ -66,6 +69,8 @@ test_parse_simple() {
   assert(ver.minor == 2);
   assert(ver.patch == 12);
 
+  semver_free(&ver);
+
   test_end();
 }
 
@@ -83,6 +88,8 @@ test_parse_major() {
   assert(ver.minor == 0);
   assert(ver.patch == 0);
 
+  semver_free(&ver);
+
   test_end();
 }
 
@@ -99,6 +106,8 @@ test_parse_minor() {
   assert(ver.major == 1);
   assert(ver.minor == 2);
   assert(ver.patch == 0);
+
+  semver_free(&ver);
 
   test_end();
 }
@@ -118,6 +127,8 @@ test_parse_prerelease() {
   assert(ver.patch == 12);
   assert(strcmp(ver.prerelease, "beta.alpha.1.1") == 0);
 
+  semver_free(&ver);
+
   test_end();
 }
 
@@ -135,6 +146,8 @@ test_parse_metadata() {
   assert(ver.minor == 2);
   assert(ver.patch == 12);
   assert(strcmp(ver.metadata, "20130313144700") == 0);
+
+  semver_free(&ver);
 
   test_end();
 }
@@ -154,6 +167,8 @@ test_parse_prerelerease_metadata() {
   assert(ver.patch == 12);
   assert(strcmp(ver.prerelease, "alpha.1") == 0);
   assert(strcmp(ver.metadata, "20130313144700") == 0);
+
+  semver_free(&ver);
 
   test_end();
 }
@@ -453,6 +468,10 @@ test_satisfies() {
 
     int resolution = semver_satisfies(verX, verY, args.op);
     assert(resolution == args.expected);
+
+
+    semver_free(&verX);
+    semver_free(&verY);
   }
 
   test_end();
@@ -488,14 +507,17 @@ test_bump() {
   semver_t ver = {1, 5, 8};
   semver_bump(&ver);
   assert(ver.major == 2);
+  semver_free(&ver);
 
   semver_t ver2 = {1};
   semver_bump(&ver2);
   assert(ver2.major == 2);
+  semver_free(&ver2);
 
   semver_t ver3 = {};
   semver_bump(&ver3);
   assert(ver3.major == 1);
+  semver_free(&ver3);
 
   test_end();
 }
@@ -507,10 +529,12 @@ test_bump_minor() {
   semver_t ver = {1, 5, 8};
   semver_bump_minor(&ver);
   assert(ver.minor == 6);
+  semver_free(&ver);
 
   semver_t ver2 = {1};
   semver_bump_minor(&ver2);
   assert(ver2.minor == 1);
+  semver_free(&ver2);
 
   test_end();
 }
@@ -522,10 +546,12 @@ test_bump_patch() {
   semver_t ver = {1, 5, 8};
   semver_bump_patch(&ver);
   assert(ver.patch == 9);
+  semver_free(&ver);
 
   semver_t ver2 = {1, 5};
   semver_bump_patch(&ver2);
   assert(ver2.patch == 1);
+  semver_free(&ver2);
 
   test_end();
 }
