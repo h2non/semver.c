@@ -169,7 +169,7 @@ Greater than or equal comparison.
 
 Lower than or equal comparison.
 
-#### semver_sender(semver_t *v, char *dest) => void
+#### semver_render(semver_t *v, char *dest) => void
 
 Render as string.
 
