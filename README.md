@@ -33,20 +33,20 @@ semver_t current_version = {};
 semver_t compare_version = {};
 
 if (semver_parse(current, &current_version)
-  && semver_parse(compare, &compare_version)) {
-  printf("Invalid semver string");
+  || semver_parse(compare, &compare_version)) {
+  fprintf(stderr,"Invalid semver string\n");
 }
 
 int resolution = semver_compare(compare_version, current_version);
 
 if (resolution == 0) {
-  printf("Versions %s is equal to: %s", compare, current)
+  printf("Versions %s is equal to: %s\n", compare, current);
 }
 else if (resolution == -1) {
-  printf("Version %s is lower than: %s", compare, current)
+  printf("Version %s is lower than: %s\n", compare, current);
 }
 else {
-  printf("Version %s is higher than: %s", compare, current)
+  printf("Version %s is higher than: %s\n", compare, current);
 }
 
 // Free allocated memory when we're done
