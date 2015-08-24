@@ -32,8 +32,8 @@ char compare[] = "2.3.0";
 semver_t current_version = {};
 semver_t compare_version = {};
 
-if (semver_parse(str, &current_version)
-  && semver_parse(str, &compare_version)) {
+if (semver_parse(current, &current_version)
+  && semver_parse(compare, &compare_version)) {
   printf("Invalid semver string");
 }
 
