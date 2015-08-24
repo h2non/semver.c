@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 #ifndef SEMVER_VERSION
-#define SEMVER_VERSION "0.1.1"
+#define SEMVER_VERSION "0.1.2"
 #endif
 
 /**
