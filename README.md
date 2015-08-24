@@ -29,29 +29,34 @@ Basic comparison:
 char current[] = "1.5.10";
 char compare[] = "2.3.0";
 
-semver_t current_version = {};
-semver_t compare_version = {};
+int
+main(int argc, char *argv[]) {
+    semver_t current_version = {};
+    semver_t compare_version = {};
 
-if (semver_parse(str, &current_version)
-  && semver_parse(str, &compare_version)) {
-  printf("Invalid semver string");
-}
+    if (semver_parse(current, &current_version)
+      || semver_parse(compare, &compare_version)) {
+      fprintf(stderr,"Invalid semver string\n");
+      return -1;
+    }
 
-int resolution = semver_compare(compare_version, current_version);
+    int resolution = semver_compare(compare_version, current_version);
 
-if (resolution == 0) {
-  printf("Versions %s is equal to: %s", compare, current)
-}
-else if (resolution == -1) {
-  printf("Version %s is lower than: %s", compare, current)
-}
-else {
-  printf("Version %s is higher than: %s", compare, current)
-}
+    if (resolution == 0) {
+      printf("Versions %s is equal to: %s\n", compare, current);
+    }
+    else if (resolution == -1) {
+      printf("Version %s is lower than: %s\n", compare, current);
+    }
+    else {
+      printf("Version %s is higher than: %s\n", compare, current);
+    }
 
-// Free allocated memory when we're done
-semver_free(&current);
-semver_free(&compare);
+    // Free allocated memory when we're done
+    semver_free(&current_version);
+    semver_free(&compare_version);
+    return 0;
+}
 ```
 
 Satisfies version:
@@ -63,19 +68,23 @@ Satisfies version:
 semver_t current = {};
 semver_t compare = {};
 
-semver_parse("1.3.10", &current);
-semver_parse("1.5.2", &compare);
+int
+main(int argc, char *argv[]) {
+    semver_parse("1.3.10", &current);
+    semver_parse("1.5.2", &compare);
 
-// Use caret operator for the comparison
-char operator[] = "^";
+    // Use caret operator for the comparison
+    char operator[] = "^";
 
-if (semver_satisfies(current, compare, operator)) {
-  printf("Version %s can be satisfied by %s", "1.3.10", "1.5.2");
+    if (semver_satisfies(current, compare, operator)) {
+      printf("Version %s can be satisfied by %s", "1.3.10", "1.5.2");
+    }
+
+    // Free allocated memory when we're done
+    semver_free(&current);
+    semver_free(&compare);
+    return 0;
 }
-
-// Free allocated memory when we're done
-semver_free(&current);
-semver_free(&compare);
 ```
 
 ## Installation
