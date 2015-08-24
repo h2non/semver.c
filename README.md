@@ -145,6 +145,31 @@ based on the given comparison operator.
 - `1` - Can be satisfied
 - `0` - Cannot be satisfied
 
+#### semver_satisfies_caret(semver_t a, semver_t b) => int
+
+Checks if version `x` can be satisfied by `y`
+performing a comparison with caret operator.
+
+See: https://docs.npmjs.com/misc/semver#caret-ranges-1-2-3-0-2-5-0-0-4
+
+**Returns**:
+
+- `1` - Can be satisfied
+- `0` - Cannot be satisfied
+
+#### semver_satisfies_patch(semver_t a, semver_t b) => int
+
+Checks if version `x` can be satisfied by `y`
+performing a comparison with tilde operator.
+
+See: https://docs.npmjs.com/misc/semver#tilde-ranges-1-2-3-1-2-1
+
+**Returns**:
+
+- `1` - Can be satisfied
+- `0` - Cannot be satisfied
+
+
 #### semver_eq(semver_t a, semver_t b) => int
 
 Equality comparison.

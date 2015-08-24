@@ -62,15 +62,6 @@ has_valid_chars (const char *str, const char *matrix) {
 }
 
 static int
-parse_int (const char *s) {
-  int valid = has_valid_chars(s, NUMBERS);
-  if (valid == 0) return -1;
-  int num = strtol(s, NULL, 10);
-  if (num > MAX_SAFE_INT) return -1;
-  return num;
-}
-
-static int
 semver_is_alpha (const char *s) {
   return has_valid_chars(s, ALPHA);
 }
@@ -85,6 +76,17 @@ binary_comparison (int x, int y) {
   if (x == y) return 0;
   if (x > y) return 1;
   return -1;
+}
+
+static int
+parse_int (const char *s) {
+  int valid = has_valid_chars(s, NUMBERS);
+  if (valid == 0) return -1;
+
+  int num = strtol(s, NULL, 10);
+  if (num > MAX_SAFE_INT) return -1;
+
+  return num;
 }
 
 static char *
