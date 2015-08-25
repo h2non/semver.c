@@ -6,5 +6,5 @@
   "license": "MIT",
   "description": "Semantic versioning parser and matcher in ANSI C",
   "keywords": ["semver", "semantic", "versioning", "version", "parser", "dependencies", "matcher", "ansi"],
-  "src": ["semver.c", "semver.h", "version.h"]
+  "src": ["semver.c", "semver.h"]
 }
