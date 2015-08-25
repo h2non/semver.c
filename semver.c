@@ -177,26 +177,26 @@ semver_parse_version (const char *str, semver_t *ver) {
 static int
 parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
   // If first alpha slice, init the allocation
-  if (ver->stage == NULL) {
+  if (ver->meta == NULL) {
     char * buf = malloc(sizeof(slice));
     if (buf == NULL) return -1;
 
     strcpy(buf, slice);
-    ver->stage = buf;
+    ver->meta = buf;
   }
   // If alpha, push in the buffer
   else {
-    int size = sizeof(ver->stage) + sizeof(slice) + 1;
-    char * buf = realloc(ver->stage, size);
+    int size = sizeof(ver->meta) + sizeof(slice) + 1;
+    char * buf = realloc(ver->meta, size);
 
     if (buf == NULL) {
-      free(ver->stage);
+      free(ver->meta);
       return -1;
     }
 
-    ver->stage = buf;
-    strcat(ver->stage, DELIMITER);
-    strcat(ver->stage, slice);
+    ver->meta = buf;
+    strcat(ver->meta, DELIMITER);
+    strcat(ver->meta, slice);
   }
 
   return 0;
@@ -220,8 +220,9 @@ parse_prerelease_version (struct metadata_s *ver, const char *slice) {
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver) {
   int result;
+
+  ver->meta = NULL;
   ver->version_count = 0;
-  ver->stage = NULL;
 
   size_t len = strlen(str);
   if (len > SLICE_SIZE) return -1;
@@ -253,22 +254,22 @@ static int
 compare_metadata_prerelease (char *x, struct metadata_s *xm) {
   int error = semver_parse_prerelease(x, xm);
   if (error) {
-     if (xm->stage) free(xm->stage);
+     if (xm->meta) free(xm->meta);
      return error;
   }
   return 0;
 }
 
 static int
-compare_metadata_stage (struct metadata_s xm, struct metadata_s ym) {
-  if (xm.stage != NULL && ym.stage != NULL) {
-    int xl = strlen(xm.stage);
-    int yl = strlen(ym.stage);
+compare_metadata_string (struct metadata_s xm, struct metadata_s ym) {
+  if (xm.meta != NULL && ym.meta != NULL) {
+    int xl = strlen(xm.meta);
+    int yl = strlen(ym.meta);
     if (xl > yl) return -1;
     if (xl < yl) return 1;
   } else {
-    if (xm.stage == NULL && ym.stage != NULL) return 1;
-    if (xm.stage != NULL && ym.stage == NULL) return -1;
+    if (xm.meta == NULL && ym.meta != NULL) return 1;
+    if (xm.meta != NULL && ym.meta == NULL) return -1;
   }
 
   return 0;
@@ -296,8 +297,8 @@ static int
 compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
   int res = 0;
 
-  // Compare stage strings by length
-  (  (res = compare_metadata_stage(xm, ym)) == 0
+  // Compare metadata strings by length
+  (  (res = compare_metadata_string(xm, ym)) == 0
   // Compare versions per number range
   && (res = compare_metadata_versions(xm, ym)));
 
@@ -315,8 +316,8 @@ compare_metadata (char *x, char *y) {
   int resolution = compare_build_slice(xm, ym);
 
   // Free allocations from heap
-  if (xm.stage) free((&xm)->stage);
-  if (ym.stage) free((&ym)->stage);
+  if (xm.meta) free((&xm)->meta);
+  if (ym.meta) free((&ym)->meta);
 
   return resolution;
 }

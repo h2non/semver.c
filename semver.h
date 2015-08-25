@@ -30,7 +30,7 @@ typedef struct semver_version_s {
 } semver_t;
 
 struct metadata_s {
-  char * stage;
+  char * meta;
   int version[50];
   int version_count;
 };
