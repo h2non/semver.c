@@ -14,6 +14,7 @@ Still beta. Do not use it in hostile environments.
 - [x] Comparison operators
 - [x] Version render
 - [x] Version bump
+- [x] Version sanitizer
 - [x] 100% coverage
 - [x] No regex (actually ANSI C doesn't support it)
 - [ ] Range characters
@@ -217,6 +218,10 @@ Helper to free allocated memory from heap.
 #### semver_is_valid(char *str) => int
 
 Checks if the given string is a valid semver expression.
+
+#### semver_clean(const char *str, char *dest) => int
+
+Removes invalid semver characters in a given string.
 
 ## License
 
