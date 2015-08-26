@@ -59,10 +59,9 @@ has_valid_chars (const char *str, const char *matrix) {
   size_t len = strlen(str);
   size_t mlen = strlen(matrix);
 
-  for (unsigned int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++)
     if (char_in_matrix(str[i], matrix, mlen) == 0)
       return 0;
-  }
 
   return 1;
 }
@@ -273,14 +272,15 @@ compare_metadata_prerelease (char *x, struct metadata_s *xm) {
 
 static int
 compare_metadata_string (struct metadata_s xm, struct metadata_s ym) {
+  if (xm.meta == NULL && ym.meta != NULL) return 1;
+  if (xm.meta != NULL && ym.meta == NULL) return -1;
+
+  // Compare strings by length (?)
   if (xm.meta != NULL && ym.meta != NULL) {
     int xl = strlen(xm.meta);
     int yl = strlen(ym.meta);
     if (xl > yl) return -1;
     if (xl < yl) return 1;
-  } else {
-    if (xm.meta == NULL && ym.meta != NULL) return 1;
-    if (xm.meta != NULL && ym.meta == NULL) return -1;
   }
 
   return 0;
@@ -582,7 +582,7 @@ concat_char (char * str, char * x, char * sep) {
 }
 
 /**
- * Render the given semver struct as string
+ * Render a given semver as string
  */
 
 void
