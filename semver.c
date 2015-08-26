@@ -106,7 +106,7 @@ parse_slice (char *buf, int len, char sep) {
   if (part == NULL) return NULL;
   strcpy(part, (char *) cache);
 
-  // Remove chars from original buffer buffer
+  // Remove chars from original buffer
   int offset = strlen(buf) - strlen(pr);
   strcut(buf, offset, len);
 
@@ -143,7 +143,7 @@ semver_parse (const char *str, semver_t *ver) {
  * Returns:
  *
  * `0` - Parsed successfully
- * `-1` - In case of error
+ * `-1` - Parse error or invalid
  */
 
 int
@@ -215,12 +215,16 @@ parse_prerelease_version (struct metadata_s *ver, const char *slice) {
 /**
  * Parses the metadata slice of a semver expression.
  * This function is mostly used internally.
+ *
+ * Returns:
+ *
+ * `0` - Parsed successfully
+ * `-1` - Parse error or invalid
  */
 
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver) {
   int result;
-
   ver->meta = NULL;
   ver->version_count = 0;
 
