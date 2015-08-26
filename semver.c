@@ -21,6 +21,11 @@
 
 const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
+/**
+ * List of supported comparison operators, storing its
+ * ASCII value per each symbol in hexadecimal notation.
+ */
+
 enum operators {
   SYMBOL_GT = 0x3e,
   SYMBOL_LT = 0x3c,
@@ -176,7 +181,7 @@ semver_parse_version (const char *str, semver_t *ver) {
 
 static int
 parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
-  // If first alpha slice, init the allocation
+  // If first alpha slice, init the heap allocation
   if (ver->meta == NULL) {
     char * buf = malloc(sizeof(slice));
     if (buf == NULL) return -1;
@@ -184,7 +189,7 @@ parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
     strcpy(buf, slice);
     ver->meta = buf;
   }
-  // If alpha, push in the buffer
+  // Otherwise, push it into the buffer
   else {
     int size = sizeof(ver->meta) + sizeof(slice) + 1;
     char * buf = realloc(ver->meta, size);
@@ -311,11 +316,15 @@ compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
 
 static int
 compare_metadata (char *x, char *y) {
+  if (x == NULL && y == NULL) return 0;
+  if (y == NULL && x) return -1;
+  if (x == NULL && y) return 1;
+
   struct metadata_s xm = {};
   struct metadata_s ym = {};
 
   if (compare_metadata_prerelease(x, &xm)
-    || compare_metadata_prerelease(y, &ym)) return -1;
+  || compare_metadata_prerelease(y, &ym)) return -1;
 
   int resolution = compare_build_slice(xm, ym);
 
@@ -328,29 +337,13 @@ compare_metadata (char *x, char *y) {
 
 int
 semver_compare_metadata (semver_t x, semver_t y) {
-  // Compare prerelease, if present
-  if (x.metadata == NULL
-      && y.prerelease == NULL
-      && x.prerelease) return -1;
-  if (x.metadata == NULL
-      && x.prerelease == NULL
-      && y.prerelease) return 1;
+  int res = compare_metadata(x.prerelease, y.prerelease);
 
-  if (x.prerelease && y.prerelease) {
-    int res = compare_metadata(x.prerelease, y.prerelease);
-    if (res) return res;
-  }
+  if (res
+    && (x.metadata == NULL
+    ||  y.metadata == NULL)) return res;
 
-  // Compare build metadata, if present
-  if (y.metadata == NULL
-      && x.metadata) return -1;
-  if (x.metadata == NULL
-      && y.metadata) return 1;
-
-  if (x.metadata && y.metadata)
-    return compare_metadata(x.metadata, y.metadata);
-
-  return 0;
+  return compare_metadata(x.metadata, y.metadata);
 }
 
 /**
@@ -368,7 +361,7 @@ int
 semver_compare_version (semver_t x, semver_t y) {
   int res = 0;
 
-  ((  res = binary_comparison(x.major, y.major)) == 0
+  (  (res = binary_comparison(x.major, y.major)) == 0
   && (res = binary_comparison(x.minor, y.minor)) == 0
   && (res = binary_comparison(x.patch, y.patch)));
 
@@ -586,6 +579,10 @@ concat_char (char * str, char * x, char * sep) {
   strcat(str, buf);
 }
 
+/**
+ * Render the given semver struct as string
+ */
+
 void
 semver_render (semver_t *x, char *dest) {
   if (x->major) concat_num(dest, x->major, NULL);
@@ -596,7 +593,7 @@ semver_render (semver_t *x, char *dest) {
 }
 
 /**
- * Bump helpers
+ * Version bump helpers
  */
 
 void
