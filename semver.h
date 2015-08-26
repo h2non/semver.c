@@ -101,3 +101,6 @@ semver_free (semver_t *x);
 
 int
 semver_is_valid (const char *s);
+
+int
+semver_clean (const char *s, char *dest);

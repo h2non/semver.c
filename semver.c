@@ -18,12 +18,13 @@
 #define NUMBERS      "0123456789"
 #define ALPHA        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DELIMITERS   DELIMITER PR_DELIMITER MT_DELIMITER
+#define VALID_CHARS  NUMBERS ALPHA DELIMITERS
 
 const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
 /**
- * List of supported comparison operators, storing its
- * ASCII value per each symbol in hexadecimal notation.
+ * Supported comparison operators, storing its
+ * ASCII code per each symbol in hexadecimal notation.
  */
 
 enum operators {
@@ -48,9 +49,9 @@ strcut (char *str, int begin, int len) {
 static int
 char_in_matrix (const char c, const char *matrix, int len) {
   for (unsigned int x = 0; x < len; x++) {
-    if ((char) matrix[x] == c) return 0;
+    if ((char) matrix[x] == c) return 1;
   }
-  return 1;
+  return 0;
 }
 
 static int
@@ -59,7 +60,7 @@ has_valid_chars (const char *str, const char *matrix) {
   size_t mlen = strlen(matrix);
 
   for (unsigned int i = 0; i < len; i++) {
-    if (char_in_matrix(str[i], matrix, mlen))
+    if (char_in_matrix(str[i], matrix, mlen) == 0)
       return 0;
   }
 
@@ -98,9 +99,9 @@ static char *
 parse_slice (char *buf, int len, char sep) {
   char * pr = strchr(buf, sep);
   if (pr == NULL) return pr;
-  int plen = strlen(pr);
 
   // Extract the slice from buffer
+  int plen = strlen(pr);
   int size = sizeof(*pr) * plen;
   char * cache[size];
   strcpy((char *) cache, buf);
@@ -153,11 +154,11 @@ semver_parse (const char *str, semver_t *ver) {
 
 int
 semver_parse_version (const char *str, semver_t *ver) {
-  int count = 0;
+  int index = 0;
   char * slice = strtok((char *) str, DELIMITER);
 
-  while (slice != NULL && count < 3) {
-    count++;
+  while (slice != NULL && index < 3) {
+    index++;
 
     size_t len = strlen(slice);
     if (len > SLICE_SIZE) return -1;
@@ -166,7 +167,7 @@ semver_parse_version (const char *str, semver_t *ver) {
     int value = parse_int(slice);
     if (value == -1) return value;
 
-    switch (count) {
+    switch (index) {
       case 1: ver->major = value; break;
       case 2: ver->minor = value; break;
       case 3: ver->patch = value; break;
@@ -189,6 +190,7 @@ parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
     strcpy(buf, slice);
     ver->meta = buf;
   }
+
   // Otherwise, push it into the buffer
   else {
     int size = sizeof(ver->meta) + sizeof(slice) + 1;
@@ -229,7 +231,7 @@ parse_prerelease_version (struct metadata_s *ver, const char *slice) {
 
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver) {
-  int result;
+  int res;
   ver->meta = NULL;
   ver->version_count = 0;
 
@@ -239,18 +241,18 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
   char * slice = strtok(str, DELIMITER);
 
   while (slice != NULL) {
-    result = 0;
+    res = 0;
 
     // If numeric, cast it and store in the version buffer
     if (semver_is_number(slice)) {
-      result = parse_prerelease_version(ver, slice);
+      res = parse_prerelease_version(ver, slice);
     }
     // If non-numeric, push to the buffer
     else {
-      result = parse_prerelease_meta(ver, slice);
+      res = parse_prerelease_meta(ver, slice);
     }
 
-    if (result) return -1;
+    if (res) return -1;
 
     // Continue with the next slice
     slice = strtok(NULL, DELIMITER);
@@ -324,7 +326,7 @@ compare_metadata (char *x, char *y) {
   struct metadata_s ym = {};
 
   if (compare_metadata_prerelease(x, &xm)
-  || compare_metadata_prerelease(y, &ym)) return -1;
+  ||  compare_metadata_prerelease(y, &ym)) return -1;
 
   int resolution = compare_build_slice(xm, ym);
 
@@ -615,8 +617,51 @@ semver_bump_patch (semver_t *x) {
  * Helpers
  */
 
+static int
+has_valid_length (const char *s) {
+  return strlen(s) <= MAX_SIZE;
+}
+
+/**
+ * Checks if a given semver string is valid
+ *
+ * Returns:
+ *
+ * `1` - Valid expression
+ * `0` - Invalid
+ */
+
 int
 semver_is_valid (const char *s) {
-  char tokens[] = NUMBERS ALPHA DELIMITERS;
-  return strlen(s) <= MAX_SIZE && has_valid_chars(s, tokens);
+  return has_valid_length(s)
+    && has_valid_chars(s, VALID_CHARS);
+}
+
+/**
+ * Removes non-valid characters from a given string.
+ * This function mutates the string directly from memory.
+ *
+ * Returns:
+ *
+ * `1` - Valid clen
+ * `0` - Invalid input
+ */
+
+int
+semver_clean (const char *s, char *dest) {
+  if (has_valid_length(s) == 0) return -1;
+
+  int offset = 0;
+  strcpy((char *) dest, s);
+  size_t len = strlen(s);
+  size_t mlen = strlen(VALID_CHARS);
+
+  for (unsigned int i = 0; i < len; i++) {
+    if (char_in_matrix(s[i], VALID_CHARS, mlen) == 0) {
+      strcut((char *) dest, i - offset, 1);
+      offset++;
+    }
+  }
+
+  return 0;
 }

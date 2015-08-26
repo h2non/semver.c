@@ -589,21 +589,42 @@ void
 test_valid_chars() {
   test_start("valid_chars");
 
+  int valid;
+
+  valid = semver_is_valid("1");
+  assert(valid == 1);
+
+  valid = semver_is_valid("159");
+  assert(valid == 1);
+
+  valid = semver_is_valid("1b3");
+  assert(valid == 1);
+
+  valid = semver_is_valid("3 0 1");
+  assert(valid == 0);
+
+  valid = semver_is_valid("&3@(");
+  assert(valid == 0);
+
+  test_end();
+}
+
+void
+test_clean() {
+  test_start("clean");
+
   int error;
 
-  error = semver_is_valid("1");
-  assert(error == 1);
-
-  error = semver_is_valid("159");
-  assert(error == 1);
-
-  error = semver_is_valid("1b3");
-  assert(error == 1);
-
-  error = semver_is_valid("3 0 1");
+  char * str = "1.2.3";
+  char * dest[10];
+  error = semver_clean(str, (char *) dest);
+  assert(strcmp((char *) dest, "1.2.3") == 0);
   assert(error == 0);
 
-  error = semver_is_valid("&3@(");
+  char * str2 = " 1.@2.3-beta #.alpha+12@34  ";
+  char * dest2[15];
+  error = semver_clean(str2, (char *) dest2);
+  assert(strcmp((char *) dest2, "1.2.3-beta.alpha+1234") == 0);
   assert(error == 0);
 
   test_end();
@@ -642,6 +663,7 @@ main() {
 
   // Helpers
   test_valid_chars();
+  test_clean();
 
   return 0;
 }
