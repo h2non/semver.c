@@ -279,8 +279,7 @@ compare_metadata_string (struct metadata_s xm, struct metadata_s ym) {
   if (xm.meta != NULL && ym.meta != NULL) {
     int xl = strlen(xm.meta);
     int yl = strlen(ym.meta);
-    if (xl > yl) return -1;
-    if (xl < yl) return 1;
+    return binary_comparison(yl, xl);
   }
 
   return 0;
