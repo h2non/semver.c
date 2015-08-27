@@ -637,13 +637,13 @@ semver_is_valid (const char *s) {
 }
 
 /**
- * Removes non-valid characters from a given string.
- * This function mutates the string directly from memory.
+ * Removes non-valid characters in a given string,
+ * returning a new one.
  *
  * Returns:
  *
- * `1` - Valid clen
- * `0` - Invalid input
+ * `0`  - Valid
+ * `-1` - Invalid input
  */
 
 int
