@@ -20,7 +20,7 @@
 #define DELIMITERS   DELIMITER PR_DELIMITER MT_DELIMITER
 #define VALID_CHARS  NUMBERS ALPHA DELIMITERS
 
-const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
+static const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
 /**
  * Supported comparison operators, storing its
