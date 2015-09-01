@@ -6,7 +6,6 @@ Still beta. Do not use it in hostile environments.
 
 ## Features
 
-- [x] Full spec parsing
 - [x] Version metadata parsing
 - [x] Version prerelease parsing
 - [x] Version comparison
