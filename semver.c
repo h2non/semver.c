@@ -23,7 +23,7 @@
 static const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
 /**
- * Supported comparison operators, storing its
+ * Declare comparison operators, storing its
  * ASCII code per each symbol in hexadecimal notation.
  */
 
