@@ -10,20 +10,20 @@
 #include <string.h>
 #include "semver.h"
 
+#define SLICE_SIZE   50
 #define DELIMITER    "."
 #define PR_DELIMITER "-"
 #define MT_DELIMITER "+"
-#define SLICE_SIZE   50
-#define MAX_SIZE     sizeof(char) * 255
 #define NUMBERS      "0123456789"
 #define ALPHA        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DELIMITERS   DELIMITER PR_DELIMITER MT_DELIMITER
 #define VALID_CHARS  NUMBERS ALPHA DELIMITERS
 
+static const int MAX_SIZE     = sizeof(char) * 255;
 static const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
 /**
- * Declare comparison operators, storing its
+ * Define comparison operators, storing the
  * ASCII code per each symbol in hexadecimal notation.
  */
 
@@ -34,6 +34,10 @@ enum operators {
   SYMBOL_TF = 0x7e,
   SYMBOL_CF = 0x5e
 };
+
+/**
+ * Private helpers
+ */
 
 static int
 strcut (char *str, int begin, int len) {
@@ -47,10 +51,9 @@ strcut (char *str, int begin, int len) {
 }
 
 static int
-char_in_matrix (const char c, const char *matrix, int len) {
-  for (unsigned int x = 0; x < len; x++) {
+contains (const char c, const char *matrix, int len) {
+  for (unsigned int x = 0; x < len; x++)
     if ((char) matrix[x] == c) return 1;
-  }
   return 0;
 }
 
@@ -60,7 +63,7 @@ has_valid_chars (const char *str, const char *matrix) {
   size_t mlen = strlen(matrix);
 
   for (unsigned int i = 0; i < len; i++)
-    if (char_in_matrix(str[i], matrix, mlen) == 0)
+    if (contains(str[i], matrix, mlen) == 0)
       return 0;
 
   return 1;
@@ -211,10 +214,9 @@ parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
 static int
 parse_prerelease_version (struct metadata_s *ver, const char *slice) {
   int num = parse_int(slice);
-
   if (num == -1) return num;
-  ver->version[ver->version_count++] = num;
 
+  ver->version[ver->version_count++] = num;
   return 0;
 }
 
@@ -341,8 +343,8 @@ semver_compare_metadata (semver_t x, semver_t y) {
   int res = compare_metadata(x.prerelease, y.prerelease);
 
   if (res
-    && (x.metadata == NULL
-    ||  y.metadata == NULL)) return res;
+  && (x.metadata == NULL
+  ||  y.metadata == NULL)) return res;
 
   return compare_metadata(x.metadata, y.metadata);
 }
@@ -479,7 +481,8 @@ semver_satisfies_caret (semver_t x, semver_t y) {
 
 int
 semver_satisfies_patch (semver_t x, semver_t y) {
-  return x.major == y.major && x.minor == y.minor;
+  return x.major == y.major
+    &&   x.minor == y.minor;
 }
 
 /**
@@ -633,7 +636,7 @@ has_valid_length (const char *s) {
 int
 semver_is_valid (const char *s) {
   return has_valid_length(s)
-    && has_valid_chars(s, VALID_CHARS);
+    &&   has_valid_chars(s, VALID_CHARS);
 }
 
 /**
@@ -656,7 +659,7 @@ semver_clean (const char *s, char *dest) {
   size_t mlen = strlen(VALID_CHARS);
 
   for (unsigned int i = 0; i < len; i++) {
-    if (char_in_matrix(s[i], VALID_CHARS, mlen) == 0) {
+    if (contains(s[i], VALID_CHARS, mlen) == 0) {
       strcut((char *) dest, i - offset, 1);
       offset++;
     }
