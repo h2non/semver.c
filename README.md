@@ -17,7 +17,7 @@ Still beta. Do not use it in hostile environments.
 - [x] 100% coverage
 - [x] No regex (actually ANSI C doesn't support it)
 - [ ] Range characters
-- [ ] Fuzz testing
+- [ ] Cast to integer for simple sorting
 
 ## Usage
 

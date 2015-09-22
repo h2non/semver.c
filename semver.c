@@ -159,9 +159,7 @@ semver_parse_version (const char *str, semver_t *ver) {
   int index = 0;
   char * slice = strtok((char *) str, DELIMITER);
 
-  while (slice != NULL && index < 3) {
-    index++;
-
+  while (slice != NULL && index++ < 3) {
     size_t len = strlen(slice);
     if (len > SLICE_SIZE) return -1;
 
@@ -232,7 +230,6 @@ parse_prerelease_version (struct metadata_s *ver, const char *slice) {
 
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver) {
-  int res;
   ver->meta = NULL;
   ver->version_count = 0;
 
@@ -240,21 +237,16 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
   if (len > SLICE_SIZE) return -1;
 
   char * slice = strtok(str, DELIMITER);
-
   while (slice != NULL) {
-    res = 0;
-
     // If numeric, cast it and store in the version buffer
-    if (semver_is_number(slice)) {
-      res = parse_prerelease_version(ver, slice);
+    if (semver_is_number(slice)
+    &&  parse_prerelease_version(ver, slice)) {
+      return -1;
     }
     // If non-numeric, push to the buffer
-    else {
-      res = parse_prerelease_meta(ver, slice);
+    else if (parse_prerelease_meta(ver, slice)) {
+      return -1;
     }
-
-    if (res) return -1;
-
     // Continue with the next slice
     slice = strtok(NULL, DELIMITER);
   }
