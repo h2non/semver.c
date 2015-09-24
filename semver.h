@@ -5,12 +5,11 @@
 // MIT licensed
 //
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef __SEMVER_H
 #define __SEMVER_H
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #ifndef SEMVER_VERSION
@@ -104,3 +103,9 @@ semver_is_valid (const char *s);
 
 int
 semver_clean (const char *s, char *dest);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
