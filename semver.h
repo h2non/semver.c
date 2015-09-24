@@ -74,9 +74,6 @@ semver_eq (semver_t x, semver_t y);
 int
 semver_neq (semver_t x, semver_t y);
 
-void
-semver_render (semver_t *x, char *dest);
-
 int
 semver_parse (const char *str, semver_t *ver);
 
@@ -85,6 +82,12 @@ semver_parse_version (const char *str, semver_t *ver);
 
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver);
+
+void
+semver_render (semver_t *x, char *dest);
+
+int
+semver_numeric (semver_t *x);
 
 void
 semver_bump (semver_t *x);

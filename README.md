@@ -16,8 +16,9 @@ Still beta. Do not use it in hostile environments.
 - [x] Version sanitizer
 - [x] 100% coverage
 - [x] No regex (actually ANSI C doesn't support it)
+- [x] Numeric conversion for sorting/filtering
 - [ ] Range characters
-- [ ] Cast to integer for simple sorting
+- [ ] Fuzz testing
 
 ## Usage
 
@@ -197,6 +198,10 @@ Lower than or equal comparison.
 #### semver_render(semver_t *v, char *dest) => void
 
 Render as string.
+
+#### semver_numeric(semver_t *v) => int
+
+Render as numeric value. Useful for ordering and filtering.
 
 #### semver_bump(semver_t *a) => void
 

@@ -105,9 +105,10 @@ parse_slice (char *buf, int len, char sep) {
   // Extract the slice from buffer
   int plen = strlen(pr);
   int size = sizeof(*pr) * plen;
-  char * cache[size];
-  strcpy((char *) cache, buf);
-  strcut((char *) cache, 0, strlen(buf) - plen + 1);
+
+  char cache[size];
+  strcpy(cache, buf);
+  strcut(cache, 0, strlen(buf) - plen + 1);
 
   // Allocate in heap
   char * part = malloc(size);
@@ -136,13 +137,13 @@ semver_parse (const char *str, semver_t *ver) {
   if (!valid) return -1;
 
   int len = strlen(str);
-  char * buf[len];
-  strcpy((char *) buf, str);
+  char buf[len];
+  strcpy(buf, str);
 
-  ver->metadata = parse_slice((char *) buf, len, MT_DELIMITER[0]);
-  ver->prerelease = parse_slice((char *) buf, len, PR_DELIMITER[0]);
+  ver->metadata = parse_slice(buf, len, MT_DELIMITER[0]);
+  ver->prerelease = parse_slice(buf, len, PR_DELIMITER[0]);
 
-  return semver_parse_version((char *) buf, ver);
+  return semver_parse_version(buf, ver);
 }
 
 /**
@@ -537,7 +538,9 @@ semver_satisfies (semver_t x, semver_t y, const char *op) {
 }
 
 /**
- * Free allocated memory for the given version.
+ * Free heep allocated memory of a given semver.
+ * This is just a convenient function that you
+ * should call when you're done.
  */
 
 void
@@ -628,8 +631,7 @@ semver_is_valid (const char *s) {
 }
 
 /**
- * Removes non-valid characters in a given string,
- * returning a new one.
+ * Removes non-valid characters in the given string.
  *
  * Returns:
  *
@@ -654,4 +656,38 @@ semver_clean (const char *s, char *dest) {
   }
 
   return 0;
+}
+
+static int
+char_to_int (const char * str) {
+  int buf = 0;
+  int len = strlen(str);
+  int mlen = strlen(VALID_CHARS);
+
+  for (unsigned int i = 0; i < len; i++)
+    if (contains(str[i], VALID_CHARS, mlen))
+      buf += (int) str[i];
+
+  return buf;
+}
+
+/**
+ * Render a given semver as numeric value.
+ * Useful for ordering and filtering.
+ */
+
+int
+semver_numeric (semver_t *x) {
+  char buf[SLICE_SIZE * 3] = {0};
+
+  if (x->major) concat_num(buf, x->major, NULL);
+  if (x->minor) concat_num(buf, x->minor, NULL);
+  if (x->patch) concat_num(buf, x->patch, NULL);
+
+  int num = parse_int(buf);
+
+  if (x->prerelease) num += char_to_int(x->prerelease);
+  if (x->metadata) num += char_to_int(x->metadata);
+
+  return num;
 }

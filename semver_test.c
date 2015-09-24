@@ -501,6 +501,29 @@ test_render() {
 }
 
 void
+test_numeric() {
+  test_start("numeric");
+
+  semver_t v0 = {0, 5, 9};
+  assert(semver_numeric(&v0) == 59);
+
+  semver_t v1 = {1, 3, 6};
+  assert(semver_numeric(&v1) == 136);
+
+  semver_t v2 = {1, 3, 6, "beta", "123456789"};
+  assert(semver_numeric(&v2) == 1025);
+
+  semver_t v3 = {1, 3, 6, "be$ta", "12&345@67(89"};
+  assert(semver_numeric(&v3) == 1025);
+
+  test_end();
+}
+
+/**
+ * Modifiers
+ */
+
+void
 test_bump() {
   test_start("bump");
 
@@ -652,8 +675,11 @@ main() {
   test_compare_lte();
   test_satisfies();
 
-  // Render
+  // Renders
   test_render();
+  test_numeric();
+
+  // Modifiers
   test_bump();
   test_bump_minor();
   test_bump_patch();
