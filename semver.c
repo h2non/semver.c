@@ -476,7 +476,7 @@ semver_satisfies_caret (semver_t x, semver_t y) {
 int
 semver_satisfies_patch (semver_t x, semver_t y) {
   return x.major == y.major
-    &&   x.minor == y.minor;
+      && x.minor == y.minor;
 }
 
 /**
@@ -501,39 +501,33 @@ semver_satisfies_patch (semver_t x, semver_t y) {
 
 int
 semver_satisfies (semver_t x, semver_t y, const char *op) {
-  int len = strlen(op);
-  if (len == 0) return 0;
-
-  // Infer the comparison operator
-  int opc[2] = {};
-  len = len > 2 ? 2 : len;
-  for (int i = 0; i < len; i++) {
-    opc[i] = (int) op[i];
-  }
+  // Extract the comparison operator
+  int first = op[0];
+  int second = op[1];
 
   // Caret operator
-  if (opc[0] == SYMBOL_CF)
+  if (first == SYMBOL_CF)
     return semver_satisfies_caret(x, y);
 
   // Tilde operator
-  if (opc[0] == SYMBOL_TF)
+  if (first == SYMBOL_TF)
     return semver_satisfies_patch(x, y);
 
   // Strict equality
-  if (opc[0] == SYMBOL_EQ)
+  if (first == SYMBOL_EQ)
     return semver_eq(x, y);
 
   // Greater than or equal comparison
-  if (opc[0] == SYMBOL_GT) {
-    if (opc[1] == SYMBOL_EQ) {
+  if (first == SYMBOL_GT) {
+    if (second == SYMBOL_EQ) {
       return semver_gte(x, y);
     }
     return semver_gt(x, y);
   }
 
   // Lower than or equal comparison
-  if (opc[0] == SYMBOL_LT) {
-    if (opc[1] == SYMBOL_EQ) {
+  if (first == SYMBOL_LT) {
+    if (second == SYMBOL_EQ) {
       return semver_lte(x, y);
     }
     return semver_lt(x, y);
@@ -630,7 +624,7 @@ has_valid_length (const char *s) {
 int
 semver_is_valid (const char *s) {
   return has_valid_length(s)
-    &&   has_valid_chars(s, VALID_CHARS);
+      && has_valid_chars(s, VALID_CHARS);
 }
 
 /**
