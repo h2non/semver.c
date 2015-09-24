@@ -317,8 +317,8 @@ compare_metadata (char *x, char *y) {
   if (y == NULL && x) return -1;
   if (x == NULL && y) return 1;
 
-  struct metadata_s xm = {};
-  struct metadata_s ym = {};
+  struct metadata_s xm = {0};
+  struct metadata_s ym = {0};
 
   if (compare_metadata_prerelease(x, &xm)
   ||  compare_metadata_prerelease(y, &ym)) return -1;
@@ -558,7 +558,7 @@ semver_free (semver_t *x) {
 
 static void
 concat_num (char * str, int x, char * sep) {
-  char buf[SLICE_SIZE] = {};
+  char buf[SLICE_SIZE] = {0};
   if (sep == NULL) sprintf(buf, "%d", x);
   else sprintf(buf, "%s%d", sep, x);
   strcat(str, buf);
@@ -566,7 +566,7 @@ concat_num (char * str, int x, char * sep) {
 
 static void
 concat_char (char * str, char * x, char * sep) {
-  char buf[SLICE_SIZE] = {};
+  char buf[SLICE_SIZE] = {0};
   sprintf(buf, "%s%s", sep, x);
   strcat(str, buf);
 }
