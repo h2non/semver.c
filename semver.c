@@ -182,32 +182,42 @@ semver_parse_version (const char *str, semver_t *ver) {
 }
 
 static int
+parse_prerelease_meta_init (struct metadata_s *ver, const char *slice) {
+  char * buf = malloc(sizeof(slice));
+  if (buf == NULL) return -1;
+
+  strcpy(buf, slice);
+  ver->meta = buf;
+
+  return 0;
+}
+
+static int
+parse_prerelease_meta_push (struct metadata_s *ver, const char *slice) {
+  int size = sizeof(ver->meta) + sizeof(slice) + 1;
+  char * buf = realloc(ver->meta, size);
+
+  if (buf == NULL) {
+    free(ver->meta);
+    return -1;
+  }
+
+  ver->meta = buf;
+  strcat(ver->meta, DELIMITER);
+  strcat(ver->meta, slice);
+
+  return 0;
+}
+
+static int
 parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
   // If first alpha slice, init the heap allocation
   if (ver->meta == NULL) {
-    char * buf = malloc(sizeof(slice));
-    if (buf == NULL) return -1;
-
-    strcpy(buf, slice);
-    ver->meta = buf;
+    return parse_prerelease_meta_init(ver, slice);
   }
 
   // Otherwise, push it into the buffer
-  else {
-    int size = sizeof(ver->meta) + sizeof(slice) + 1;
-    char * buf = realloc(ver->meta, size);
-
-    if (buf == NULL) {
-      free(ver->meta);
-      return -1;
-    }
-
-    ver->meta = buf;
-    strcat(ver->meta, DELIMITER);
-    strcat(ver->meta, slice);
-  }
-
-  return 0;
+  return parse_prerelease_meta_push(ver, slice);
 }
 
 static int
