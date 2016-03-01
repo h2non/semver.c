@@ -2,8 +2,6 @@
 
 [Semantic version](http://semver.org) v2.0 parser and render written in [ANSI C](https://en.wikipedia.org/wiki/ANSI_C) with zero dependencies.
 
-Still beta. Do not use it in hostile environments.
-
 ## Features
 
 - [x] Version metadata parsing
