@@ -221,7 +221,7 @@ Helper to free allocated memory from heap.
 
 Checks if the given string is a valid semver expression.
 
-#### semver_clean(const char *str, char *dest) => int
+#### semver_clean(char *str) => int
 
 Removes invalid semver characters in a given string.
 

@@ -105,7 +105,7 @@ int
 semver_is_valid (const char *s);
 
 int
-semver_clean (const char *s, char *dest);
+semver_clean (char *s);
 
 #ifdef __cplusplus
 }
