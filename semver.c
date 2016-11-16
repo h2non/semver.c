@@ -45,7 +45,7 @@ strcut (char *str, int begin, int len) {
 
   if (len < 0) len = l - begin;
   if (begin + len > l) len = l - begin;
-  memmove(str + begin, str + begin + len, l - len + 1);
+  memmove(str + begin, str + begin + len, l - len + 1 - begin);
 
   return len;
 }
@@ -650,18 +650,16 @@ semver_is_valid (const char *s) {
  */
 
 int
-semver_clean (const char *s, char *dest) {
+semver_clean (char *s) {
   if (has_valid_length(s) == 0) return -1;
 
-  int offset = 0;
-  strcpy((char *) dest, s);
   size_t len = strlen(s);
   size_t mlen = strlen(VALID_CHARS);
 
   for (unsigned int i = 0; i < len; i++) {
     if (contains(s[i], VALID_CHARS, mlen) == 0) {
-      strcut((char *) dest, i - offset, 1);
-      offset++;
+      strcut(s, i, 1);
+      --len; --i;
     }
   }
 

@@ -638,16 +638,14 @@ test_clean() {
 
   int error;
 
-  char * str = "1.2.3";
-  char * dest[10];
-  error = semver_clean(str, (char *) dest);
-  assert(strcmp((char *) dest, "1.2.3") == 0);
+  char str[] = "1.2.3";
+  error = semver_clean(str);
+  assert(strcmp(str, "1.2.3") == 0);
   assert(error == 0);
 
-  char * str2 = " 1.@2.3-beta #.alpha+12@34  ";
-  char * dest2[15];
-  error = semver_clean(str2, (char *) dest2);
-  assert(strcmp((char *) dest2, "1.2.3-beta.alpha+1234") == 0);
+  char str2[] = " 1.@2.3-beta #.alpha+12@34  ";
+  error = semver_clean(str2);
+  assert(strcmp(str2, "1.2.3-beta.alpha+1234") == 0);
   assert(error == 0);
 
   test_end();
