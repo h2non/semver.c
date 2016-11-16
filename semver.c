@@ -45,7 +45,7 @@ strcut (char *str, int begin, int len) {
 
   if (len < 0) len = l - begin;
   if (begin + len > l) len = l - begin;
-  memmove(str + begin, str + begin + len, l - len + 1);
+  memmove(str + begin, str + begin + len, l - len + 1 - begin);
 
   return len;
 }
