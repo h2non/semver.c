@@ -19,7 +19,7 @@
 #define DELIMITERS   DELIMITER PR_DELIMITER MT_DELIMITER
 #define VALID_CHARS  NUMBERS ALPHA DELIMITERS
 
-static const int MAX_SIZE     = sizeof(char) * 255;
+static const size_t MAX_SIZE     = sizeof(char) * 255;
 static const int MAX_SAFE_INT = (unsigned int) -1 >> 1;
 
 /**
@@ -39,30 +39,39 @@ enum operators {
  * Private helpers
  */
 
+/*
+ * Remove [begin:len-begin] from str by moving len data from begin+len to begin.
+ * If len is negative cut out to the end of the string.
+ */
 static int
 strcut (char *str, int begin, int len) {
-  int l = strlen(str);
+  size_t l;
+  l = strlen(str);
 
-  if (len < 0) len = l - begin;
-  if (begin + len > l) len = l - begin;
+  if(l > MAX_SAFE_INT) return -1;
+
+  if (len < 0) len = l - begin + 1;
+  if (begin + len > (int)l) len = l - begin;
   memmove(str + begin, str + begin + len, l - len + 1 - begin);
 
   return len;
 }
 
 static int
-contains (const char c, const char *matrix, int len) {
-  for (unsigned int x = 0; x < len; x++)
+contains (const char c, const char *matrix, size_t len) {
+  size_t x;
+  for (x = 0; x < len; x++)
     if ((char) matrix[x] == c) return 1;
   return 0;
 }
 
 static int
 has_valid_chars (const char *str, const char *matrix) {
-  size_t len = strlen(str);
-  size_t mlen = strlen(matrix);
+  size_t i, len, mlen;
+  len = strlen(str);
+  mlen = strlen(matrix);
 
-  for (unsigned int i = 0; i < len; i++)
+  for (i = 0; i < len; i++)
     if (contains(str[i], matrix, mlen) == 0)
       return 0;
 
@@ -88,36 +97,41 @@ binary_comparison (int x, int y) {
 
 static int
 parse_int (const char *s) {
-  int valid = has_valid_chars(s, NUMBERS);
+  int valid, num;
+  valid = has_valid_chars(s, NUMBERS);
   if (valid == 0) return -1;
 
-  int num = strtol(s, NULL, 10);
+  num = strtol(s, NULL, 10);
   if (num > MAX_SAFE_INT) return -1;
 
   return num;
 }
 
 static char *
-parse_slice (char *buf, int len, char sep) {
-  char * pr = strchr(buf, sep);
-  if (pr == NULL) return pr;
+parse_slice (char *buf, size_t len, char sep) {
+  char *pr, *cache, *part;
+  int plen, offset, res;
+  pr = strchr(buf, sep);
+  if (pr == NULL) return NULL;
 
   /* Extract the slice from buffer[pr:end] into cache */
-  int plen = strlen(pr);
-  int size = sizeof(*pr) * plen;
-
-  char cache[size];
+  plen = strlen(pr);
+  cache = calloc(strlen(buf) + 1, sizeof(*cache));
   strcpy(cache, buf);
-  strcut(cache, 0, strlen(buf) - plen + 1);
+  /* Remove [0:pr] from cache */
+  res = strcut(cache, 0, strlen(buf) - plen + 1);
+  if(res == -1) return NULL;
 
   /* Copy cache to part */
-  char * part = malloc(size);
+  part = calloc(plen + 1, sizeof(*part));
   if (part == NULL) return NULL;
-  strcpy(part, (char *) cache);
+  strcpy(part, cache);
+  free(cache);
 
   /* Remove [pr:end] from original buffer */
-  int offset = strlen(buf) - strlen(pr);
-  strcut(buf, offset, len);
+  offset = strlen(buf) - strlen(pr);
+  res = strcut(buf, offset, len);
+  if(res == -1) return NULL;
 
   return part;
 }
@@ -133,17 +147,22 @@ parse_slice (char *buf, int len, char sep) {
 
 int
 semver_parse (const char *str, semver_t *ver) {
-  int valid = semver_is_valid(str);
+  int valid, res;
+  size_t len;
+  char *buf;
+  valid = semver_is_valid(str);
   if (!valid) return -1;
 
-  int len = strlen(str);
-  char buf[len];
+  len = strlen(str);
+  buf = calloc(len + 1, sizeof(*buf));
   strcpy(buf, str);
 
   ver->metadata = parse_slice(buf, len, MT_DELIMITER[0]);
   ver->prerelease = parse_slice(buf, len, PR_DELIMITER[0]);
 
-  return semver_parse_version(buf, ver);
+  res = semver_parse_version(buf, ver);
+  free(buf);
+  return res;
 }
 
 /**
@@ -157,15 +176,18 @@ semver_parse (const char *str, semver_t *ver) {
 
 int
 semver_parse_version (const char *str, semver_t *ver) {
-  int index = 0;
-  char * slice = strtok((char *) str, DELIMITER);
+  int index, value;
+  char *slice;
+  size_t len;
+  slice = strtok((char *) str, DELIMITER);
+  index = 0;
 
   while (slice != NULL && index++ < 4) {
-    size_t len = strlen(slice);
+    len = strlen(slice);
     if (len > SLICE_SIZE) return -1;
 
     /* Cast to integer and store */
-    int value = parse_int(slice);
+    value = parse_int(slice);
     if (value == -1) return value;
 
     switch (index) {
@@ -183,7 +205,8 @@ semver_parse_version (const char *str, semver_t *ver) {
 
 static int
 parse_prerelease_meta_init (struct metadata_s *ver, const char *slice) {
-  char * buf = malloc(sizeof(slice));
+  char *buf;
+  buf = malloc(sizeof(slice));
   if (buf == NULL) return -1;
 
   strcpy(buf, slice);
@@ -194,8 +217,10 @@ parse_prerelease_meta_init (struct metadata_s *ver, const char *slice) {
 
 static int
 parse_prerelease_meta_push (struct metadata_s *ver, const char *slice) {
-  int size = sizeof(ver->meta) + sizeof(slice) + 1;
-  char * buf = realloc(ver->meta, size);
+  int size;
+  char *buf;
+  size = sizeof(ver->meta) + sizeof(slice) + 1;
+  buf = realloc(ver->meta, size);
 
   if (buf == NULL) {
     free(ver->meta);
@@ -222,7 +247,8 @@ parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
 
 static int
 parse_prerelease_version (struct metadata_s *ver, const char *slice) {
-  int num = parse_int(slice);
+  int num;
+  num = parse_int(slice);
   if (num == -1) return num;
 
   ver->version[ver->version_count++] = num;
@@ -241,13 +267,15 @@ parse_prerelease_version (struct metadata_s *ver, const char *slice) {
 
 int
 semver_parse_prerelease (char *str, struct metadata_s *ver) {
+  size_t len;
+  char *slice;
   ver->meta = NULL;
   ver->version_count = 0;
 
-  size_t len = strlen(str);
+  len = strlen(str);
   if (len > SLICE_SIZE) return -1;
 
-  char * slice = strtok(str, DELIMITER);
+  slice = strtok(str, DELIMITER);
 
   while (slice != NULL) {
     /* If numeric, cast it and store in the version buffer */
@@ -269,7 +297,8 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
 
 static int
 compare_metadata_prerelease (char *x, struct metadata_s *xm) {
-  int error = semver_parse_prerelease(x, xm);
+  int error;
+  error = semver_parse_prerelease(x, xm);
   if (error) {
      if (xm->meta) free(xm->meta);
      return error;
@@ -279,13 +308,14 @@ compare_metadata_prerelease (char *x, struct metadata_s *xm) {
 
 static int
 compare_metadata_string (struct metadata_s xm, struct metadata_s ym) {
+  int xl, yl;
   if (xm.meta == NULL && ym.meta != NULL) return 1;
   if (xm.meta != NULL && ym.meta == NULL) return -1;
 
   /* Compare strings by length (?) */
   if (xm.meta != NULL && ym.meta != NULL) {
-    int xl = strlen(xm.meta);
-    int yl = strlen(ym.meta);
+    xl = strlen(xm.meta);
+    yl = strlen(ym.meta);
     return binary_comparison(yl, xl);
   }
 
@@ -294,16 +324,17 @@ compare_metadata_string (struct metadata_s xm, struct metadata_s ym) {
 
 static int
 compare_metadata_versions (struct metadata_s xm, struct metadata_s ym) {
+  int i, xv, yv, resolution;
   /* First compare that version length matches */
   if (xm.version_count != ym.version_count) {
     return xm.version_count < ym.version_count ? 1 : -1;
   }
 
   /* Then compare each version slice individually */
-  for (int i = 0; i < xm.version_count; i++) {
-    int xv = xm.version[i];
-    int yv = ym.version[i];
-    int resolution = binary_comparison(xv, yv);
+  for (i = 0; i < xm.version_count; i++) {
+    xv = xm.version[i];
+    yv = ym.version[i];
+    resolution = binary_comparison(xv, yv);
     if (resolution) return resolution;
   }
 
@@ -312,8 +343,7 @@ compare_metadata_versions (struct metadata_s xm, struct metadata_s ym) {
 
 static int
 compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
-  int res = 0;
-
+  int res;
   /* Compare metadata strings by length */
   (  (res = compare_metadata_string(xm, ym)) == 0
   /* Compare versions per number range */
@@ -324,17 +354,19 @@ compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
 
 static int
 compare_metadata (char *x, char *y) {
+  int resolution;
+  struct metadata_s xm, ym;
   if (x == NULL && y == NULL) return 0;
   if (y == NULL && x) return -1;
   if (x == NULL && y) return 1;
 
-  struct metadata_s xm = {0};
-  struct metadata_s ym = {0};
+  memset(&ym, 0, sizeof(ym));
+  memset(&xm, 0, sizeof(xm));
 
   if (compare_metadata_prerelease(x, &xm)
   ||  compare_metadata_prerelease(y, &ym)) return -1;
 
-  int resolution = compare_build_slice(xm, ym);
+  resolution = compare_build_slice(xm, ym);
 
   /* Free allocations from heap */
   if (xm.meta) free((&xm)->meta);
@@ -345,7 +377,8 @@ compare_metadata (char *x, char *y) {
 
 int
 semver_compare_metadata (semver_t x, semver_t y) {
-  int res = compare_metadata(x.prerelease, y.prerelease);
+  int res;
+  res = compare_metadata(x.prerelease, y.prerelease);
 
   if (res
   && (x.metadata == NULL
@@ -367,7 +400,7 @@ semver_compare_metadata (semver_t x, semver_t y) {
 
 int
 semver_compare_version (semver_t x, semver_t y) {
-  int res = 0;
+  int res;
 
   (  (res = binary_comparison(x.major, y.major)) == 0
   && (res = binary_comparison(x.minor, y.minor)) == 0
@@ -387,7 +420,7 @@ semver_compare_version (semver_t x, semver_t y) {
 
 int
 semver_compare (semver_t x, semver_t y) {
-  int res = 0;
+  int res;
 
   (  (res = semver_compare_version(x, y)) == 0
   && (res = semver_compare_metadata(x, y)));
@@ -512,9 +545,10 @@ semver_satisfies_patch (semver_t x, semver_t y) {
 
 int
 semver_satisfies (semver_t x, semver_t y, const char *op) {
+  int first, second;
   /* Extract the comparison operator */
-  int first = op[0];
-  int second = op[1];
+  first = op[0];
+  second = op[1];
 
   /* Caret operator */
   if (first == SYMBOL_CF)
@@ -651,14 +685,17 @@ semver_is_valid (const char *s) {
 
 int
 semver_clean (char *s) {
+  size_t i, len, mlen;
+  int res;
   if (has_valid_length(s) == 0) return -1;
 
-  size_t len = strlen(s);
-  size_t mlen = strlen(VALID_CHARS);
+  len = strlen(s);
+  mlen = strlen(VALID_CHARS);
 
-  for (unsigned int i = 0; i < len; i++) {
+  for (i = 0; i < len; i++) {
     if (contains(s[i], VALID_CHARS, mlen) == 0) {
-      strcut(s, i, 1);
+      res = strcut(s, i, 1);
+      if(res == -1) return -1;
       --len; --i;
     }
   }
@@ -668,11 +705,13 @@ semver_clean (char *s) {
 
 static int
 char_to_int (const char * str) {
-  int buf = 0;
-  int len = strlen(str);
-  int mlen = strlen(VALID_CHARS);
+  int buf;
+  size_t i,len, mlen;
+  buf = 0;
+  len = strlen(str);
+  mlen = strlen(VALID_CHARS);
 
-  for (unsigned int i = 0; i < len; i++)
+  for (i = 0; i < len; i++)
     if (contains(str[i], VALID_CHARS, mlen))
       buf += (int) str[i];
 
@@ -686,13 +725,16 @@ char_to_int (const char * str) {
 
 int
 semver_numeric (semver_t *x) {
-  char buf[SLICE_SIZE * 3] = {0};
+  int num;
+  char buf[SLICE_SIZE * 3];
+  memset(&buf, 0, SLICE_SIZE * 3);
 
   if (x->major) concat_num(buf, x->major, NULL);
   if (x->minor) concat_num(buf, x->minor, NULL);
   if (x->patch) concat_num(buf, x->patch, NULL);
 
-  int num = parse_int(buf);
+  num = parse_int(buf);
+  if(num == -1) return -1;
 
   if (x->prerelease) num += char_to_int(x->prerelease);
   if (x->metadata) num += char_to_int(x->metadata);
