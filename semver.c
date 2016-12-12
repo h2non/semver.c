@@ -107,31 +107,30 @@ parse_int (const char *s) {
   return num;
 }
 
+/*
+ * Return a string allocated on the heap with the content from sep to end and
+ * terminate buf at sep.
+ */
 static char *
-parse_slice (char *buf, size_t len, char sep) {
-  char *pr, *cache, *part;
-  int plen, offset, res;
+parse_slice (char *buf, char sep) {
+  char *pr, *part;
+  int plen;
+
+  /* Find separator in buf */
   pr = strchr(buf, sep);
   if (pr == NULL) return NULL;
-
-  /* Extract the slice from buffer[pr:end] into cache */
+  /* Length from separator to end of buf */
   plen = strlen(pr);
-  cache = calloc(strlen(buf) + 1, sizeof(*cache));
-  strcpy(cache, buf);
-  /* Remove [0:pr] from cache */
-  res = strcut(cache, 0, strlen(buf) - plen + 1);
-  if(res == -1) return NULL;
 
-  /* Copy cache to part */
+  /* Copy from buf into new string */
   part = calloc(plen + 1, sizeof(*part));
   if (part == NULL) return NULL;
-  strcpy(part, cache);
-  free(cache);
+  memcpy(part, pr + 1, plen);
+  /* Null terminate new string */
+  part[plen] = '\0';
 
-  /* Remove [pr:end] from original buffer */
-  offset = strlen(buf) - strlen(pr);
-  res = strcut(buf, offset, len);
-  if(res == -1) return NULL;
+  /* Terminate buf where separator was */
+  *pr = '\0';
 
   return part;
 }
@@ -157,8 +156,8 @@ semver_parse (const char *str, semver_t *ver) {
   buf = calloc(len + 1, sizeof(*buf));
   strcpy(buf, str);
 
-  ver->metadata = parse_slice(buf, len, MT_DELIMITER[0]);
-  ver->prerelease = parse_slice(buf, len, PR_DELIMITER[0]);
+  ver->metadata = parse_slice(buf, MT_DELIMITER[0]);
+  ver->prerelease = parse_slice(buf, PR_DELIMITER[0]);
 
   res = semver_parse_version(buf, ver);
   free(buf);
