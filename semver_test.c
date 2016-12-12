@@ -1,9 +1,9 @@
-//
-// semver_test.c
-//
-// Copyright (c) 2015 Tomas Aparicio
-// MIT licensed
-//
+/*
+ * semver_test.c
+ *
+ * Copyright (c) 2015 Tomas Aparicio
+ * MIT licensed
+ */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -34,8 +34,8 @@ typedef int (*fn)(semver_t, semver_t);
 
 static void
 compare_helper (char *a, char *b, int expected, fn test_fn) {
-  semver_t verX = {};
-  semver_t verY = {};
+  semver_t verX = {0};
+  semver_t verY = {0};
 
   semver_parse(a, &verX);
   semver_parse(b, &verY);
@@ -49,7 +49,8 @@ compare_helper (char *a, char *b, int expected, fn test_fn) {
 
 static void
 suite_runner(struct test_case cases[], int len, fn test_fn) {
-  for (int i = 0; i < len; i++) {
+  int i;
+  for (i = 0; i < len; i++) {
     struct test_case args = cases[i];
     compare_helper(args.x, args.y, args.expected, test_fn);
   }
@@ -79,7 +80,7 @@ test_parse_major() {
   test_start("parse_major");
 
   char buf[] = "2";
-  semver_t ver = {};
+  semver_t ver = {0};
 
   int error = semver_parse(buf, &ver);
 
@@ -98,7 +99,7 @@ test_parse_minor() {
   test_start("parse_minor");
 
   char buf[] = "1.2";
-  semver_t ver = {};
+  semver_t ver = {0};
 
   int error = semver_parse(buf, &ver);
 
@@ -117,7 +118,7 @@ test_parse_prerelease() {
   test_start("parse_prerelease");
 
   char buf[] = "1.2.12-beta.alpha.1.1";
-  semver_t ver = {};
+  semver_t ver = {0};
 
   int error = semver_parse(buf, &ver);
 
@@ -137,7 +138,7 @@ test_parse_metadata() {
   test_start("parse_metadata");
 
   char buf[] = "1.2.12+20130313144700";
-  semver_t ver = {};
+  semver_t ver = {0};
 
   int error = semver_parse(buf, &ver);
 
@@ -157,7 +158,7 @@ test_parse_prerelerease_metadata() {
   test_start("parse_prerelease_metadata");
 
   char buf[] = "1.2.12-alpha.1+20130313144700";
-  semver_t ver = {};
+  semver_t ver = {0};
 
   int error = semver_parse(buf, &ver);
 
@@ -457,11 +458,12 @@ test_satisfies() {
     {"1.0.0", "1.0.0", "~", 1},
   };
 
-  for (int i = 0; i < 82; i++) {
+  int i;
+  for (i = 0; i < 82; i++) {
     struct test_case_match args = cases[i];
 
-    semver_t verX = {};
-    semver_t verY = {};
+    semver_t verX = {0};
+    semver_t verY = {0};
 
     semver_parse(args.x, &verX);
     semver_parse(args.y, &verY);
@@ -485,15 +487,15 @@ void
 test_render() {
   test_start("render");
 
-  semver_t ver = {1, 5, 8};
-  char * str[10] = {};
+  semver_t ver = {1, 5, 8, NULL, NULL};
+  char * str[10] = {0};
   semver_render(&ver, (char *) str);
   assert(strcmp((char *) str, "1.5.8") == 0);
 
-  semver_t ver2 = {1, 5, 8};
+  semver_t ver2 = {1, 5, 8, NULL, NULL};
   ver2.prerelease = "alpha.1";
   ver2.metadata = "1232323";
-  char * str2[22] = {};
+  char * str2[22] = {0};
   semver_render(&ver2, (char *) str2);
   assert(strcmp((char *) str2, "1.5.8-alpha.1+1232323") == 0);
 
@@ -504,10 +506,10 @@ void
 test_numeric() {
   test_start("numeric");
 
-  semver_t v0 = {0, 5, 9};
+  semver_t v0 = {0, 5, 9, NULL, NULL};
   assert(semver_numeric(&v0) == 59);
 
-  semver_t v1 = {1, 3, 6};
+  semver_t v1 = {1, 3, 6, NULL, NULL};
   assert(semver_numeric(&v1) == 136);
 
   semver_t v2 = {1, 3, 6, "beta", "123456789"};
@@ -527,17 +529,17 @@ void
 test_bump() {
   test_start("bump");
 
-  semver_t ver = {1, 5, 8};
+  semver_t ver = {1, 5, 8, NULL, NULL};
   semver_bump(&ver);
   assert(ver.major == 2);
   semver_free(&ver);
 
-  semver_t ver2 = {1};
+  semver_t ver2 = {1, 0, 0, NULL, NULL};
   semver_bump(&ver2);
   assert(ver2.major == 2);
   semver_free(&ver2);
 
-  semver_t ver3 = {};
+  semver_t ver3 = {0, 0, 0, NULL, NULL};
   semver_bump(&ver3);
   assert(ver3.major == 1);
   semver_free(&ver3);
@@ -549,12 +551,12 @@ void
 test_bump_minor() {
   test_start("bump_minor");
 
-  semver_t ver = {1, 5, 8};
+  semver_t ver = {1, 5, 8, NULL, NULL};
   semver_bump_minor(&ver);
   assert(ver.minor == 6);
   semver_free(&ver);
 
-  semver_t ver2 = {1};
+  semver_t ver2 = {1, 0, 0, NULL, NULL};
   semver_bump_minor(&ver2);
   assert(ver2.minor == 1);
   semver_free(&ver2);
@@ -566,12 +568,12 @@ void
 test_bump_patch() {
   test_start("bump_patch");
 
-  semver_t ver = {1, 5, 8};
+  semver_t ver = {1, 5, 8, NULL, NULL};
   semver_bump_patch(&ver);
   assert(ver.patch == 9);
   semver_free(&ver);
 
-  semver_t ver2 = {1, 5};
+  semver_t ver2 = {1, 5, 0, NULL, NULL};
   semver_bump_patch(&ver2);
   assert(ver2.patch == 1);
   semver_free(&ver2);
@@ -587,14 +589,14 @@ void
 test_free () {
   test_start("free");
 
-  semver_t ver = {};
+  semver_t ver = {0};
   char * str = "1.5.6";
   semver_parse(str, &ver);
   assert(ver.major == 1);
   assert(ver.patch == 6);
   semver_free(&ver);
 
-  semver_t ver2 = {};
+  semver_t ver2 = {0};
   char * str2 = "1.5.6-beta.1+12345";
   semver_parse(str2, &ver2);
   assert(ver2.prerelease != NULL);
@@ -654,7 +656,7 @@ test_clean() {
 int
 main() {
 
-  // Parser
+  /* Parser */
   test_parse_simple();
   test_parse_major();
   test_parse_minor();
@@ -662,7 +664,7 @@ main() {
   test_parse_metadata();
   test_parse_prerelerease_metadata();
 
-  // Comparison
+  /* Comparison */
   test_compare();
   test_compare_full();
   test_compare_gt();
@@ -673,19 +675,19 @@ main() {
   test_compare_lte();
   test_satisfies();
 
-  // Renders
+  /* Renders */
   test_render();
   test_numeric();
 
-  // Modifiers
+  /* Modifiers */
   test_bump();
   test_bump_minor();
   test_bump_patch();
 
-  // Clean up
+  /* Clean up */
   test_free();
 
-  // Helpers
+  /* Helpers */
   test_valid_chars();
   test_clean();
 

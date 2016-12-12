@@ -1,9 +1,9 @@
-//
-// semver.h
-//
-// Copyright (c) 2015 Tomas Aparicio
-// MIT licensed
-//
+/*
+ * semver.h
+ *
+ * Copyright (c) 2015 Tomas Aparicio
+ * MIT licensed
+ */
 
 #ifndef __SEMVER_H
 #define __SEMVER_H
