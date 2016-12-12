@@ -1,9 +1,9 @@
-//
-// semver_test.c
-//
-// Copyright (c) 2015 Tomas Aparicio
-// MIT licensed
-//
+/*
+ * semver_test.c
+ *
+ * Copyright (c) 2015 Tomas Aparicio
+ * MIT licensed
+ */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -654,7 +654,7 @@ test_clean() {
 int
 main() {
 
-  // Parser
+  /* Parser */
   test_parse_simple();
   test_parse_major();
   test_parse_minor();
@@ -662,7 +662,7 @@ main() {
   test_parse_metadata();
   test_parse_prerelerease_metadata();
 
-  // Comparison
+  /* Comparison */
   test_compare();
   test_compare_full();
   test_compare_gt();
@@ -673,19 +673,19 @@ main() {
   test_compare_lte();
   test_satisfies();
 
-  // Renders
+  /* Renders */
   test_render();
   test_numeric();
 
-  // Modifiers
+  /* Modifiers */
   test_bump();
   test_bump_minor();
   test_bump_patch();
 
-  // Clean up
+  /* Clean up */
   test_free();
 
-  // Helpers
+  /* Helpers */
   test_valid_chars();
   test_clean();
 

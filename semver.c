@@ -1,9 +1,9 @@
-//
-// semver.c
-//
-// Copyright (c) 2015 Tomas Aparicio
-// MIT licensed
-//
+/*
+ * semver.c
+ *
+ * Copyright (c) 2015 Tomas Aparicio
+ * MIT licensed
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,7 +102,7 @@ parse_slice (char *buf, int len, char sep) {
   char * pr = strchr(buf, sep);
   if (pr == NULL) return pr;
 
-  // Extract the slice from buffer
+  /* Extract the slice from buffer[pr:end] into cache */
   int plen = strlen(pr);
   int size = sizeof(*pr) * plen;
 
@@ -110,12 +110,12 @@ parse_slice (char *buf, int len, char sep) {
   strcpy(cache, buf);
   strcut(cache, 0, strlen(buf) - plen + 1);
 
-  // Allocate in heap
+  /* Copy cache to part */
   char * part = malloc(size);
   if (part == NULL) return NULL;
   strcpy(part, (char *) cache);
 
-  // Remove chars from original buffer
+  /* Remove [pr:end] from original buffer */
   int offset = strlen(buf) - strlen(pr);
   strcut(buf, offset, len);
 
@@ -164,7 +164,7 @@ semver_parse_version (const char *str, semver_t *ver) {
     size_t len = strlen(slice);
     if (len > SLICE_SIZE) return -1;
 
-    // Cast to integer and store
+    /* Cast to integer and store */
     int value = parse_int(slice);
     if (value == -1) return value;
 
@@ -174,7 +174,7 @@ semver_parse_version (const char *str, semver_t *ver) {
       case 3: ver->patch = value; break;
     }
 
-    // Continue with the next slice
+    /* Continue with the next slice */
     slice = strtok(NULL, DELIMITER);
   }
 
@@ -211,12 +211,12 @@ parse_prerelease_meta_push (struct metadata_s *ver, const char *slice) {
 
 static int
 parse_prerelease_meta (struct metadata_s *ver, const char *slice) {
-  // If first alpha slice, init the heap allocation
+  /* If first alpha slice, init the heap allocation */
   if (ver->meta == NULL) {
     return parse_prerelease_meta_init(ver, slice);
   }
 
-  // Otherwise, push it into the buffer
+  /* Otherwise, push it into the buffer */
   return parse_prerelease_meta_push(ver, slice);
 }
 
@@ -250,17 +250,17 @@ semver_parse_prerelease (char *str, struct metadata_s *ver) {
   char * slice = strtok(str, DELIMITER);
 
   while (slice != NULL) {
-    // If numeric, cast it and store in the version buffer
+    /* If numeric, cast it and store in the version buffer */
     if (semver_is_number(slice)) {
       if (parse_prerelease_version(ver, slice))
         return -1;
     }
-    // If non-numeric, push to the buffer
+    /* If non-numeric, push to the buffer */
     else if (parse_prerelease_meta(ver, slice)) {
       return -1;
     }
 
-    // Continue with the next slice
+    /* Continue with the next slice */
     slice = strtok(NULL, DELIMITER);
   }
 
@@ -282,7 +282,7 @@ compare_metadata_string (struct metadata_s xm, struct metadata_s ym) {
   if (xm.meta == NULL && ym.meta != NULL) return 1;
   if (xm.meta != NULL && ym.meta == NULL) return -1;
 
-  // Compare strings by length (?)
+  /* Compare strings by length (?) */
   if (xm.meta != NULL && ym.meta != NULL) {
     int xl = strlen(xm.meta);
     int yl = strlen(ym.meta);
@@ -294,12 +294,12 @@ compare_metadata_string (struct metadata_s xm, struct metadata_s ym) {
 
 static int
 compare_metadata_versions (struct metadata_s xm, struct metadata_s ym) {
-  // First compare that version length matches
+  /* First compare that version length matches */
   if (xm.version_count != ym.version_count) {
     return xm.version_count < ym.version_count ? 1 : -1;
   }
 
-  // Then compare each version slice individually
+  /* Then compare each version slice individually */
   for (int i = 0; i < xm.version_count; i++) {
     int xv = xm.version[i];
     int yv = ym.version[i];
@@ -314,9 +314,9 @@ static int
 compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
   int res = 0;
 
-  // Compare metadata strings by length
+  /* Compare metadata strings by length */
   (  (res = compare_metadata_string(xm, ym)) == 0
-  // Compare versions per number range
+  /* Compare versions per number range */
   && (res = compare_metadata_versions(xm, ym)));
 
   return res;
@@ -336,7 +336,7 @@ compare_metadata (char *x, char *y) {
 
   int resolution = compare_build_slice(xm, ym);
 
-  // Free allocations from heap
+  /* Free allocations from heap */
   if (xm.meta) free((&xm)->meta);
   if (ym.meta) free((&ym)->meta);
 
@@ -512,23 +512,23 @@ semver_satisfies_patch (semver_t x, semver_t y) {
 
 int
 semver_satisfies (semver_t x, semver_t y, const char *op) {
-  // Extract the comparison operator
+  /* Extract the comparison operator */
   int first = op[0];
   int second = op[1];
 
-  // Caret operator
+  /* Caret operator */
   if (first == SYMBOL_CF)
     return semver_satisfies_caret(x, y);
 
-  // Tilde operator
+  /* Tilde operator */
   if (first == SYMBOL_TF)
     return semver_satisfies_patch(x, y);
 
-  // Strict equality
+  /* Strict equality */
   if (first == SYMBOL_EQ)
     return semver_eq(x, y);
 
-  // Greater than or equal comparison
+  /* Greater than or equal comparison */
   if (first == SYMBOL_GT) {
     if (second == SYMBOL_EQ) {
       return semver_gte(x, y);
@@ -536,7 +536,7 @@ semver_satisfies (semver_t x, semver_t y, const char *op) {
     return semver_gt(x, y);
   }
 
-  // Lower than or equal comparison
+  /* Lower than or equal comparison */
   if (first == SYMBOL_LT) {
     if (second == SYMBOL_EQ) {
       return semver_lte(x, y);
