@@ -1,5 +1,5 @@
 CC      ?= cc
-CFLAGS   = -std=c89 -Ideps -Wall -Wextra -pedantic -Wno-unused-function
+CFLAGS   = -std=c89 -Ideps -Wall -Wextra -pedantic -Wno-unused-function -Wno-declaration-after-statement
 VALGRIND = valgrind
 
 test: semver.c semver_test.c
