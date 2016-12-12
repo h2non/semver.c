@@ -49,6 +49,7 @@ int test_strcut() {
         {"ALPHA.BETA", 5, -1, "ALPHA"},
         {"ALPHA.BETA", 0, 6, "BETA"},
         {"ALPHA.BETA", 0, 6, "BETA"},
+        {"ALPHA.BETA", 2, 6, "ALTA"},
     };
 
     printf("TEST 1: ");
