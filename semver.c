@@ -48,7 +48,7 @@ strcut (char *str, int begin, int len) {
   size_t l;
   l = strlen(str);
 
-  if(l > MAX_SAFE_INT) return -1;
+  if((int)l < 0 || (int)l > MAX_SAFE_INT) return -1;
 
   if (len < 0) len = l - begin + 1;
   if (begin + len > (int)l) len = l - begin;
