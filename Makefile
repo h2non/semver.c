@@ -3,6 +3,7 @@ CFLAGS   = -std=c89 -Ideps -Wall -Wextra -pedantic -Wno-unused-function -Wno-dec
 VALGRIND = valgrind
 RM       = rm -rf
 
+# Call make with DEBUG=anything to compile with debug flag and with extra output
 ifneq ($(DEBUG),)
 CFLAGS += -g -DDEBUG=1
 endif
