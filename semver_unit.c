@@ -16,7 +16,7 @@ void test_strcut_first(char *in, int offset, int len, char *expected) {
 
 void test_strcut_second(char *in, char sep, int side, char *expected) {
     char *p;
-    int offset, len;
+    int offset;
     /* Setup */
     p = calloc(strlen(in) + 1, sizeof(*in));
     memcpy(p, in, strlen(in) + 1);
@@ -32,7 +32,7 @@ void test_strcut_second(char *in, char sep, int side, char *expected) {
     assert(memcmp(p, expected, strlen(expected) + 1) == 0);
 }
 
-int test_strcut() {
+void test_strcut() {
     int i, n;
     struct strcut_test_case {
         char *in;
@@ -88,7 +88,7 @@ int test_strcut() {
     printf("OK\n");
 }
 
-int main(int argc, const char* argv) {
+int main() {
     test_strcut();
     return 0;
 }
