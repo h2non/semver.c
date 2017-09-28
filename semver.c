@@ -79,11 +79,6 @@ has_valid_chars (const char *str, const char *matrix) {
 }
 
 static int
-semver_is_alpha (const char *s) {
-  return has_valid_chars(s, ALPHA);
-}
-
-static int
 semver_is_number (const char *s) {
   return has_valid_chars(s, NUMBERS);
 }
