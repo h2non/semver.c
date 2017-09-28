@@ -347,9 +347,10 @@ static int
 compare_build_slice (struct metadata_s xm, struct metadata_s ym) {
   int res;
   /* Compare metadata strings by length */
-  (  (res = compare_metadata_string(xm, ym)) == 0
-  /* Compare versions per number range */
-  && (res = compare_metadata_versions(xm, ym)));
+  if ((res = compare_metadata_string(xm, ym)) == 0) {
+    /* Compare versions per number range */
+    return compare_metadata_versions(xm, ym);
+  }
 
   return res;
 }
@@ -404,9 +405,11 @@ int
 semver_compare_version (semver_t x, semver_t y) {
   int res;
 
-  (  (res = binary_comparison(x.major, y.major)) == 0
-  && (res = binary_comparison(x.minor, y.minor)) == 0
-  && (res = binary_comparison(x.patch, y.patch)));
+  if ((res = binary_comparison(x.major, y.major)) == 0) {
+    if ((res = binary_comparison(x.minor, y.minor)) == 0) {
+      return binary_comparison(x.patch, y.patch);
+    }
+  }
 
   return res;
 }
@@ -424,8 +427,9 @@ int
 semver_compare (semver_t x, semver_t y) {
   int res;
 
-  (  (res = semver_compare_version(x, y)) == 0
-  && (res = semver_compare_metadata(x, y)));
+  if ((res = semver_compare_version(x, y)) == 0) {
+    return semver_compare_metadata(x, y);
+  }
 
   return res;
 }
