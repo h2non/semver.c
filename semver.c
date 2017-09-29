@@ -170,18 +170,22 @@ semver_parse (const char *str, semver_t *ver) {
 int
 semver_parse_version (const char *str, semver_t *ver) {
   int index, value;
-  char *slice;
+  char *slice, *next, *endptr;
   size_t len;
-  slice = strtok((char *) str, DELIMITER);
+  slice = (char *) str;
   index = 0;
 
   while (slice != NULL && index++ < 4) {
-    len = strlen(slice);
+    next = strchr(slice, DELIMITER[0]);
+    if (next == NULL)
+      len = strlen(slice);
+    else
+      len = next - slice;
     if (len > SLICE_SIZE) return -1;
 
     /* Cast to integer and store */
-    value = parse_int(slice);
-    if (value == -1) return value;
+    value = strtol(slice, &endptr, 10);
+    if (endptr != next && *endptr != '\0') return -1;
 
     switch (index) {
       case 1: ver->major = value; break;
@@ -190,7 +194,10 @@ semver_parse_version (const char *str, semver_t *ver) {
     }
 
     /* Continue with the next slice */
-    slice = strtok(NULL, DELIMITER);
+    if (next == NULL)
+      slice = NULL;
+    else
+      slice = next + 1;
   }
 
   return 0;
