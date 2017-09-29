@@ -149,6 +149,7 @@ semver_parse (const char *str, semver_t *ver) {
 
   len = strlen(str);
   buf = calloc(len + 1, sizeof(*buf));
+  if (buf == NULL) return -1;
   strcpy(buf, str);
 
   ver->metadata = parse_slice(buf, MT_DELIMITER[0]);
