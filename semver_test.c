@@ -215,17 +215,37 @@ test_compare_full() {
     {"1.5.1-beta.1.0", "1.5.1-alpha.1.0", 1},
     {"1.5.1-beta.1.100", "1.5.1-alpha.1.99", 1},
     {"1.5.1-beta.1.123456789", "1.5.1-alpha.1.12345678", 1},
-    {"1.5.1-beta.alpha.1", "1.5.1-beta.alpha.1.12345678", 1},
-    {"1.5.1-beta.alpha.1", "1.5.1-beta.alpha.1+123", 1},
-    {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+20120313144700", 1},
+    {"1.5.1-beta.alpha.1", "1.5.1-beta.alpha.1.12345678", -1},
+    {"1.5.1-beta.alpha.1", "1.5.1-beta.alpha.1+123", 0},
+    {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+20120313144700", 0},
     {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+20130313144700", 0},
-    {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+exp.sha.5114f85", 1},
+    {"1.5.1-beta.1+20130313144700", "1.5.1-beta.1+exp.sha.5114f85", 0},
     {"1.5.1-beta.1+exp.sha.5114f85", "1.5.1-beta.1+exp.sha.5114f84", 0},
-    {"1.5.1-beta.1+exp.sha.5114f85", "1.5.1-beta.1+exp.sha1.5114f84", 1},
-    {"1.5.1-beta.1+exp.sha", "1.5.1-beta.1+exp.sha256", 1},
+    {"1.5.1-beta.1+exp.sha.5114f85", "1.5.1-beta.1+exp.sha1.5114f84", 0},
+    {"1.5.1-beta.1+exp.sha", "1.5.1-beta.1+exp.sha256", 0},
+    {"1.5.1-alpha.beta", "1.5.1-1.beta", 1},
   };
 
-  suite_runner(cases, 20, &semver_compare);
+  suite_runner(cases, 21, &semver_compare);
+  test_end();
+}
+
+void
+test_compare_spec() {
+  test_start("semver_compare_spec");
+
+  /* from: http://semver.org/spec/v2.0.0.html#spec-item-11 */
+  struct test_case cases[] = {
+    {"1.0.0-alpha", "1.0.0-alpha.1", -1},
+    {"1.0.0-alpha.1", "1.0.0-alpha.beta", -1},
+    {"1.0.0-alpha.beta", "1.0.0-beta", -1},
+    {"1.0.0-beta", "1.0.0-beta.2", -1},
+    {"1.0.0-beta.2", "1.0.0-beta.11", -1},
+    {"1.0.0-beta.11", "1.0.0-rc.1", -1},
+    {"1.0.0-rc.1", "1.0.0", -1},
+  };
+
+  suite_runner(cases, 7, &semver_compare);
   test_end();
 }
 
@@ -667,6 +687,7 @@ main() {
   /* Comparison */
   test_compare();
   test_compare_full();
+  test_compare_spec();
   test_compare_gt();
   test_compare_lt();
   test_compare_eq();

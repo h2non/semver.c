@@ -28,12 +28,6 @@ typedef struct semver_version_s {
   char * prerelease;
 } semver_t;
 
-struct metadata_s {
-  char * meta;
-  int version[50];
-  int version_count;
-};
-
 /**
  * Set prototypes
  */
@@ -54,7 +48,7 @@ int
 semver_compare_version (semver_t x, semver_t y);
 
 int
-semver_compare_metadata (semver_t x, semver_t y);
+semver_compare_prerelease (semver_t x, semver_t y);
 
 int
 semver_gt (semver_t x, semver_t y);
@@ -79,9 +73,6 @@ semver_parse (const char *str, semver_t *ver);
 
 int
 semver_parse_version (const char *str, semver_t *ver);
-
-int
-semver_parse_prerelease (char *str, struct metadata_s *ver);
 
 void
 semver_render (semver_t *x, char *dest);
