@@ -1,5 +1,5 @@
 CC      ?= cc
-CFLAGS   = -std=c89 -Ideps -Wall -Wextra -pedantic -Wno-declaration-after-statement
+CFLAGS   = -std=c89 -Ideps -Wall -Wextra -pedantic -Wno-missing-field-initializers -Wno-unused-function -Wno-declaration-after-statement
 VALGRIND = valgrind
 RM       = rm -rf
 

@@ -4,19 +4,22 @@
 
 ## Features
 
+- [x] Standard compliant (otherwise, open an issue)
 - [x] Version metadata parsing
 - [x] Version prerelease parsing
-- [x] Version comparison
-- [x] Comparison helpers
-- [x] Comparison operators
+- [x] Version comparison helpers
+- [x] Supports comparison operators
 - [x] Version render
 - [x] Version bump
 - [x] Version sanitizer
-- [x] 100% coverage
-- [x] No regex (actually ANSI C doesn't support it)
+- [x] 100% test coverage
+- [x] No regexp (ANSI C doesn't support it)
 - [x] Numeric conversion for sorting/filtering
-- [ ] Range characters
-- [ ] Fuzz testing
+
+## Versions
+
+- [v0](https://github.com/h2non/semver.c/tree/89e66f36544e0250def32640b84b7e15c8585da4) - Legacy version. Beta. Not maintained anymore.
+- [v1](https://github.com/h2non/semver.c) - Current stable version.
 
 ## Usage
 

@@ -82,7 +82,7 @@ void test_strcut() {
     printf("TEST 2: ");
 
     n = sizeof(cases_2) / sizeof(struct strcut_test_case_2);
-    for(i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
         test_strcut_second(cases_2[i].in, cases_2[i].sep, cases_2[i].side, cases_2[i].expected);
     }
     printf("OK\n");

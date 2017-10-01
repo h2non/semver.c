@@ -153,7 +153,7 @@ semver_parse (const char *str, semver_t *ver) {
   res = semver_parse_version(buf, ver);
   free(buf);
 #if DEBUG > 0
-  printf("%s = %d.%d.%d, %s %s\n", str, ver->major, ver->minor, ver->patch, ver->prerelease, ver->metadata);
+  printf("[debug] semver.c %s = %d.%d.%d, %s %s\n", str, ver->major, ver->minor, ver->patch, ver->prerelease, ver->metadata);
 #endif
   return res;
 }
@@ -169,9 +169,9 @@ semver_parse (const char *str, semver_t *ver) {
 
 int
 semver_parse_version (const char *str, semver_t *ver) {
+  size_t len;
   int index, value;
   char *slice, *next, *endptr;
-  size_t len;
   slice = (char *) str;
   index = 0;
 
@@ -211,21 +211,26 @@ compare_prerelease (char *x, char *y) {
   if (x == NULL && y == NULL) return 0;
   if (y == NULL && x) return -1;
   if (x == NULL && y) return 1;
+
   lastx = x;
   lasty = y;
   xlen = strlen(x);
   ylen = strlen(y);
+
   while (1) {
     if ((xptr = strchr(lastx, DELIMITER[0])) == NULL)
       xptr = x + xlen;
     if ((yptr = strchr(lasty, DELIMITER[0])) == NULL)
       yptr = y + ylen;
+
     xnum = strtol(lastx, &endptr, 10);
     xisnum = endptr == xptr ? 1 : 0;
     ynum = strtol(lasty, &endptr, 10);
     yisnum = endptr == yptr ? 1 : 0;
+
     if (xisnum && !yisnum) return -1;
     if (!xisnum && yisnum) return 1;
+
     if (xisnum && yisnum) {
       /* Numerical comparison */
       if (xnum != ynum) return xnum < ynum ? -1 : 1;
@@ -237,12 +242,14 @@ compare_prerelease (char *x, char *y) {
       if ((res = strncmp(lastx, lasty, min))) return res < 0 ? -1 : 1;
       if (xn != yn) return xn < yn ? -1 : 1;
     }
+
     lastx = xptr + 1;
     lasty = yptr + 1;
     if (lastx == x + xlen + 1 && lasty == y + ylen + 1) break;
     if (lastx == x + xlen + 1) return -1;
     if (lasty == y + ylen + 1) return 1;
   }
+
   return 0;
 }
 

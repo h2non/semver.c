@@ -1,7 +1,7 @@
 /*
  * semver.h
  *
- * Copyright (c) 2015 Tomas Aparicio
+ * Copyright (c) 2015-2017 Tomas Aparicio
  * MIT licensed
  */
 
