@@ -113,7 +113,7 @@ parse_slice (char *buf, char sep) {
   plen = strlen(pr);
 
   /* Copy from buf into new string */
-  part = calloc(plen + 1, sizeof(*part));
+  part = (char*)calloc(plen + 1, sizeof(*part));
   if (part == NULL) return NULL;
   memcpy(part, pr + 1, plen);
   /* Null terminate new string */
@@ -143,7 +143,7 @@ semver_parse (const char *str, semver_t *ver) {
   if (!valid) return -1;
 
   len = strlen(str);
-  buf = calloc(len + 1, sizeof(*buf));
+  buf = (char*)calloc(len + 1, sizeof(*buf));
   if (buf == NULL) return -1;
   strcpy(buf, str);
 
