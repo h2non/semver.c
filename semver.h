@@ -24,6 +24,9 @@ typedef struct semver_version_s {
   int major;
   int minor;
   int patch;
+  int is_major_set;
+  int is_minor_set;
+  int is_patch_set;
   char * metadata;
   char * prerelease;
 } semver_t;
@@ -70,6 +73,9 @@ semver_neq (semver_t x, semver_t y);
 
 int
 semver_parse (const char *str, semver_t *ver);
+
+int
+semver_parse_op(const char *str, semver_t *ver, char (*op)[3]);
 
 int
 semver_parse_version (const char *str, semver_t *ver);

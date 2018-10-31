@@ -159,6 +159,62 @@ semver_parse (const char *str, semver_t *ver) {
 }
 
 /**
+* Parses a string to retreived semver and operation string
+*
+* Returns:
+*
+* `0` - Parsed successfully
+* `-1` - In case of error
+*/
+int
+semver_parse_op(const char *str, semver_t *ver, char(*op)[3]) {
+  int valid, res;
+  size_t len;
+  char *buf;
+  char *head;
+  size_t i,j;
+
+  if (op == NULL) return -1;
+
+  len = strlen(str);
+  buf = (char*)calloc(len + 1, sizeof(*buf));
+  if (buf == NULL) return -1;
+  strcpy(buf, str);
+
+  head = buf;
+  j = 0;
+  for (i = 0; i < len; i++) {
+    const char c = buf[i];
+    if ((c >= '0' && c <= '9') || c == '.') continue; // number, keep buf untouched
+    if (c == 'x') {
+        buf[i] = '\0'; // remove 'x'
+        if (i > 0 && (buf[i-1] == '.')) buf[i-1] = '\0'; // remove also previous '.' if any
+        break;
+    }
+    if (j < 2) {
+        (*op)[j++] = c;
+        head = &(buf[i+1]); // move head to skip operation part
+    }
+  }
+  (*op)[j] = '\0';
+
+  valid = semver_is_valid(head);
+  if (!valid) {
+      free(buf);
+      return -1;
+  }
+
+  ver->metadata = parse_slice(head, MT_DELIMITER[0]);
+  ver->prerelease = parse_slice(head, PR_DELIMITER[0]);
+  res = semver_parse_version(head[0] == '\0' ? NULL : head, ver);
+  free(buf);
+#if DEBUG > 0
+  printf("[debug] semver.c %s = %d.%d.%d, %s %s\n", str, ver->major, ver->minor, ver->patch, ver->prerelease, ver->metadata);
+#endif
+  return res;
+}
+
+/**
  * Parses a given string as semver expression.
  *
  * Returns:
@@ -175,6 +231,10 @@ semver_parse_version (const char *str, semver_t *ver) {
   slice = (char *) str;
   index = 0;
 
+  ver->major = 0; ver->is_major_set = 0;
+  ver->minor = 0; ver->is_minor_set = 0;
+  ver->patch = 0; ver->is_patch_set = 0;
+
   while (slice != NULL && index++ < 4) {
     next = strchr(slice, DELIMITER[0]);
     if (next == NULL)
@@ -188,9 +248,9 @@ semver_parse_version (const char *str, semver_t *ver) {
     if (endptr != next && *endptr != '\0') return -1;
 
     switch (index) {
-      case 1: ver->major = value; break;
-      case 2: ver->minor = value; break;
-      case 3: ver->patch = value; break;
+      case 1: ver->major = value; ver->is_major_set = 1; break;
+      case 2: ver->minor = value; ver->is_minor_set = 1; break;
+      case 3: ver->patch = value; ver->is_patch_set = 1; break;
     }
 
     /* Continue with the next slice */
@@ -450,6 +510,17 @@ semver_satisfies (semver_t x, semver_t y, const char *op) {
       return semver_lte(x, y);
     }
     return semver_lt(x, y);
+  }
+
+  /* no op */
+  if (first == '\0') {
+      if (!y.is_major_set) return 1;
+      if (y.major != x.major) return 0;
+      if (!y.is_minor_set) return 1;
+      if (y.minor != x.minor) return 0;
+      if (!y.is_patch_set) return 1;
+      if (y.patch != x.patch) return 0;
+      return 1;
   }
 
   return 0;
