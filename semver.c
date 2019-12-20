@@ -604,8 +604,8 @@ semver_numeric (semver_t *x) {
   memset(&buf, 0, SLICE_SIZE * 3);
 
   if (x->major) concat_num(buf, x->major, NULL);
-  if (x->minor) concat_num(buf, x->minor, NULL);
-  if (x->patch) concat_num(buf, x->patch, NULL);
+  if (x->major || x->minor) concat_num(buf, x->minor, NULL);
+  if (x->major || x->minor || x->patch) concat_num(buf, x->patch, NULL);
 
   num = parse_int(buf);
   if(num == -1) return -1;
