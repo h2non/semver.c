@@ -529,6 +529,21 @@ test_numeric() {
   semver_t v0 = {0, 5, 9, NULL, NULL};
   assert(semver_numeric(&v0) == 59);
 
+  semver_t v01 = {0, 0, 9, NULL, NULL};
+  assert(semver_numeric(&v01) == 9);
+
+  semver_t v02 = {0, 0, 0, NULL, NULL};
+  assert(semver_numeric(&v02) == 0);
+
+  semver_t v03 = {1, 0, 2, NULL, NULL};
+  assert(semver_numeric(&v03) == 102);
+
+  semver_t v04 = {1, 2, 0, NULL, NULL};
+  assert(semver_numeric(&v04) == 120);
+
+  semver_t v05 = {4, 0, 0, NULL, NULL};
+  assert(semver_numeric(&v05) == 400);
+
   semver_t v1 = {1, 3, 6, NULL, NULL};
   assert(semver_numeric(&v1) == 136);
 
