@@ -498,9 +498,9 @@ concat_char (char * str, char * x, char * sep) {
 
 void
 semver_render (semver_t *x, char *dest) {
-  if (x->major) concat_num(dest, x->major, NULL);
-  if (x->minor) concat_num(dest, x->minor, DELIMITER);
-  if (x->patch) concat_num(dest, x->patch, DELIMITER);
+  concat_num(dest, x->major, NULL);
+  concat_num(dest, x->minor, DELIMITER);
+  concat_num(dest, x->patch, DELIMITER);
   if (x->prerelease) concat_char(dest, x->prerelease, PR_DELIMITER);
   if (x->metadata) concat_char(dest, x->metadata, MT_DELIMITER);
 }

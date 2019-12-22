@@ -519,6 +519,11 @@ test_render() {
   semver_render(&ver2, (char *) str2);
   assert(strcmp((char *) str2, "1.5.8-alpha.1+1232323") == 0);
 
+  semver_t ver3 = {1, 0, 8, NULL, NULL};
+  char * str3[10] = {0};
+  semver_render(&ver3, (char *) str3);
+  assert(strcmp((char *) str3, "1.0.8") == 0);
+
   test_end();
 }
 
