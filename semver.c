@@ -370,11 +370,32 @@ semver_lte (semver_t x, semver_t y) {
 
 int
 semver_satisfies_caret (semver_t x, semver_t y) {
+  /* Major versions must always match. */
   if (x.major == y.major) {
+    /* If major version is 0, minor versions must match */
     if (x.major == 0) {
-      return x.minor >= y.minor;
+        /* If minor version is 0, patch must match */
+        if (x.minor == 0){
+          return (x.minor == y.minor) && (x.patch == y.patch);
+        }
+        /* If minor version is not 0, patch must be >= */
+        else if (x.minor == y.minor){
+          return x.patch >= y.patch;
+        }
+        else{
+          return 0;
+        }
+      }
+    else if (x.minor > y.minor){
+      return 1;
     }
-    return 1;
+    else if (x.minor == y.minor)
+    {
+      return x.patch >= y.patch;
+    }
+    else {
+      return 0;
+    }
   }
   return 0;
 }
