@@ -19,6 +19,6 @@ h2nonsemverc_lib = library(
 )
 
 h2nonsemverc_dep = declare_dependency(
-  link_with: h2nonsemverc_lib,
   include_directories: h2nonsemverc_inc,
+  link_with: h2nonsemverc_lib,
 )
